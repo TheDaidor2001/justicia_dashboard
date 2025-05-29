@@ -393,8 +393,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@primeuix/styled@0.6.3':
-    resolution: {integrity: sha512-cW8XbJ1wWN9kC7lDhGpgTZI3FnUm68tw34BRm8C+z6T3X/Ayw+kfxlApxNEafipjWYiwNM9L+TUOHumbsESjqw==}
+  '@primeuix/styled@0.6.4':
+    resolution: {integrity: sha512-7ePLwqazLV0x269YlPMeE4wtQKT0NScY2/gEin0/96krTiGiElmlzKMMbH69bVApm/sfen5DZGuCEEwPiBJJ5g==}
     engines: {node: '>=12.11.0'}
 
   '@primeuix/styles@1.1.1':
@@ -1784,23 +1784,23 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@primeuix/styled@0.6.3':
+  '@primeuix/styled@0.6.4':
     dependencies:
       '@primeuix/utils': 0.5.3
 
   '@primeuix/styles@1.1.1':
     dependencies:
-      '@primeuix/styled': 0.6.3
+      '@primeuix/styled': 0.6.4
 
   '@primeuix/themes@1.1.1':
     dependencies:
-      '@primeuix/styled': 0.6.3
+      '@primeuix/styled': 0.6.4
 
   '@primeuix/utils@0.5.3': {}
 
   '@primevue/core@4.3.4(vue@3.5.16(typescript@5.8.3))':
     dependencies:
-      '@primeuix/styled': 0.6.3
+      '@primeuix/styled': 0.6.4
       '@primeuix/utils': 0.5.3
       vue: 3.5.16(typescript@5.8.3)
 
@@ -1813,7 +1813,7 @@ snapshots:
 
   '@primevue/themes@4.3.4':
     dependencies:
-      '@primeuix/styled': 0.6.3
+      '@primeuix/styled': 0.6.4
       '@primeuix/themes': 1.1.1
 
   '@rollup/pluginutils@5.1.4(rollup@4.41.1)':
@@ -2586,7 +2586,7 @@ snapshots:
 
   primevue@4.3.4(vue@3.5.16(typescript@5.8.3)):
     dependencies:
-      '@primeuix/styled': 0.6.3
+      '@primeuix/styled': 0.6.4
       '@primeuix/styles': 1.1.1
       '@primeuix/utils': 0.5.3
       '@primevue/core': 4.3.4(vue@3.5.16(typescript@5.8.3))
