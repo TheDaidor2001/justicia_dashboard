@@ -104,6 +104,7 @@ export interface ExpedienteFilters {
 }
 
 export interface ExpedientesResponse {
+    message: any;
     success: boolean;
     data: Expediente[];
     pagination: {
