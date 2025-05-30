@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { authGuard } from '@/guards/auth.guard'
+import { authGuard, expedientesGuard, juezGuard } from '@/guards/auth.guard'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -19,6 +19,27 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('@/views/dashboard/DashboardView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/expedientes',
+      name: 'expedientes',
+      component: () => import('@/views/expedientes/ExpedientesListView.vue'),
+      beforeEnter: expedientesGuard,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/expedientes/nuevo',
+      name: 'expediente-nuevo',
+      component: () => import('@/views/expedientes/ExpedienteFormView.vue'),
+      beforeEnter: juezGuard,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/expedientes/:id/editar',
+      name: 'expediente-editar',
+      component: () => import('@/views/expedientes/ExpedienteFormView.vue'),
+      beforeEnter: juezGuard,
       meta: { requiresAuth: true }
     }
   ]
