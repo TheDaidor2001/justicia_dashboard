@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Fuente personalizada */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @theme {
   /* Colores del sistema judicial */
@@ -28,8 +30,7 @@
   --spacing-96: 24rem;
 }
 
-/* Fuente personalizada */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 
 /* Variables CSS para PrimeVue */
 :root {
@@ -57,15 +58,31 @@ body {
 /* Clases utilitarias personalizadas */
 @layer utilities {
   .glass-effect {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .btn-primary {
-    @apply bg-primary hover: bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: var(--color-primary);
+    color: white;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    background-color: oklch(0.6 0.162 75.834);
   }
 
   .card-shadow {
-    @apply shadow-lg hover: shadow-xl transition-shadow duration-300;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s;
+  }
+
+  .card-shadow:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 }
 
