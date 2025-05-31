@@ -5,6 +5,8 @@ import { useExpedientes } from '@/composables/useExpedientes'
 import { useAuth } from '@/composables/useAuth'
 import { ExpedienteStatus } from '@/types/expediente'
 import type { Expediente, ApprovalHistoryItem } from '@/types/expediente'
+import DocumentUpload from '@/components/documents/DocumentUpload.vue'
+import DocumentList from '@/components/documents/DocumentList.vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -15,6 +17,7 @@ import Message from 'primevue/message'
 import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
 import ProgressSpinner from 'primevue/progressspinner'
+import Divider from 'primevue/divider'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 
@@ -37,6 +40,9 @@ const {
 
 const { user, isJuez, isPresidenteAudiencia, isSecretarioGeneral } = useAuth()
 
+// Referencias a componentes hijos
+const documentListRef = ref<InstanceType<typeof DocumentList> | null>(null)
+
 // Estado
 const expediente = ref<Expediente | null>(null)
 const loading = ref(true)
@@ -50,6 +56,21 @@ const approvalComments = ref('')
 const rejectionComments = ref('')
 
 const expedienteId = computed(() => route.params.id as string)
+
+// Verificar si puede editar documentos
+const canEditDocuments = computed(() => {
+    if (!expediente.value || !user.value) return false
+
+    // Puede editar documentos si:
+    // 1. Es el creador del expediente
+    // 2. Es un admin
+    // 3. El expediente está en estado borrador o pendiente
+    return (
+        (expediente.value.createdBy === user.value.id || user.value.role === 'admin') &&
+        (expediente.value.status === ExpedienteStatus.DRAFT ||
+            expediente.value.status === ExpedienteStatus.PENDING_APPROVAL)
+    )
+})
 
 // Cargar expediente
 const loadExpediente = async () => {
@@ -184,6 +205,19 @@ const confirmReject = async () => {
     } finally {
         processingAction.value = false
     }
+}
+
+// Manejar documento subido
+const onDocumentUploaded = () => {
+    // Refrescar la lista de documentos
+    documentListRef.value?.refreshDocuments()
+
+    toast.add({
+        severity: 'success',
+        summary: 'Documento adjuntado',
+        detail: 'El documento se ha adjuntado correctamente al expediente',
+        life: 3000
+    })
 }
 
 // Formatear fecha
@@ -359,14 +393,37 @@ const getHistoryColor = (action: string) => {
                         <i class="pi pi-file mr-2"></i>
                         <span>Documentos</span>
                     </template>
-                    <Card>
-                        <template #content>
-                            <div class="text-center py-8 text-gray-500">
-                                <i class="pi pi-folder-open text-4xl mb-4"></i>
-                                <p>Gestión de documentos - Próximamente</p>
-                            </div>
-                        </template>
-                    </Card>
+                    <div class="space-y-6">
+                        <!-- Upload de documentos -->
+                        <Card v-if="canEditDocuments">
+                            <template #title>
+                                <div class="flex items-center gap-2">
+                                    <i class="pi pi-upload text-xl"></i>
+                                    <span>Adjuntar Documento</span>
+                                </div>
+                            </template>
+                            <template #content>
+                                <DocumentUpload :expediente-id="expedienteId" :disabled="!canEditDocuments"
+                                    @upload-success="onDocumentUploaded" />
+                            </template>
+                        </Card>
+
+                        <!-- Lista de documentos -->
+                        <Card>
+                            <template #title>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <i class="pi pi-list text-xl"></i>
+                                        <span>Documentos Adjuntos</span>
+                                    </div>
+                                </div>
+                            </template>
+                            <template #content>
+                                <DocumentList ref="documentListRef" :expediente-id="expedienteId"
+                                    :can-delete="canEditDocuments" />
+                            </template>
+                        </Card>
+                    </div>
                 </TabPanel>
 
                 <!-- Tab Historial -->

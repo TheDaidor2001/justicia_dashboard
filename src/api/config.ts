@@ -4,6 +4,23 @@ export const API_CONFIG = {
     TIMEOUT: 30000,
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000,
+    // Biblioteca Digital
+    BOOKS_PUBLIC: '/books/public',
+    BOOKS: '/books',
+    BOOK_DETAIL: (id: string) => `/books/${id}`,
+    BOOK_DOWNLOAD: (id: string) => `/books/${id}/download`,
+    BOOKS_TAGS_POPULAR: '/books/tags/popular',
+
+    // Notificaciones
+    NOTIFICATIONS: '/notifications',
+    NOTIFICATION_READ: (id: string) => `/notifications/${id}/read`,
+    NOTIFICATIONS_READ_MULTIPLE: '/notifications/read-multiple',
+    NOTIFICATIONS_UNREAD_COUNT: '/notifications/unread-count',
+
+    // Dashboard
+    DASHBOARD_PENDING_TASKS: '/dashboard/pending-tasks',
+    DASHBOARD_SUMMARY: '/dashboard/summary',
+    DASHBOARD_STATS_BY_ROLE: '/dashboard/stats-by-role',
 };
 
 // Endpoints de la API
