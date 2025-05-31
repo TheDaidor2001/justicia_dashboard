@@ -8,7 +8,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import Card from 'primevue/card'
 import Toolbar from 'primevue/toolbar'
@@ -104,7 +104,7 @@ const formatDate = (date: string) => {
                             </IconField>
 
                             <!-- Filtro por estado -->
-                            <Dropdown v-model="selectedStatus" :options="statusOptions" optionLabel="label"
+                            <Select v-model="selectedStatus" :options="statusOptions" optionLabel="label"
                                 optionValue="value" placeholder="Filtrar por estado" class="w-48"
                                 @change="onStatusChange" />
 

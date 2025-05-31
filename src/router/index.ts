@@ -36,6 +36,13 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/expedientes/:id',
+      name: 'expediente-detalle',
+      component: () => import('@/views/expedientes/ExpedienteDetailView.vue'),
+      beforeEnter: expedientesGuard,
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/expedientes/:id/editar',
       name: 'expediente-editar',
       component: () => import('@/views/expedientes/ExpedienteFormView.vue'),

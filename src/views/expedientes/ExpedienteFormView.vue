@@ -7,7 +7,7 @@ import { required, minLength, maxLength } from '@vuelidate/validators'
 import type { CreateExpedienteDto, UpdateExpedienteDto } from '@/types/expediente'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Message from 'primevue/message'
@@ -242,7 +242,7 @@ const getErrorMessage = (field: string) => {
                         <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
                             Departamento <span class="text-red-500">*</span>
                         </label>
-                        <Dropdown id="department" v-model="formData.departmentId" :options="departments"
+                        <Select id="department" v-model="formData.departmentId" :options="departments"
                             optionLabel="name" optionValue="id" placeholder="Selecciona un departamento" class="w-full"
                             :class="{ 'p-invalid': v$.departmentId.$error }" :disabled="loading || submitting" />
                         <small v-if="v$.departmentId.$error" class="p-error">
