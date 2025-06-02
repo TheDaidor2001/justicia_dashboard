@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useExpedientes } from '@/composables/useExpedientes'
 import { useAuth } from '@/composables/useAuth'
 import { ExpedienteStatus } from '@/types/expediente'
+import type { Expediente } from '@/types/expediente'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -16,7 +17,7 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 
 const router = useRouter()
-const { canCreateExpedientes } = useAuth()
+const { canCreateExpedientes, user } = useAuth()
 const {
     expedientes,
     loading,
@@ -56,11 +57,11 @@ const onStatusChange = () => {
     setStatusFilter(selectedStatus.value || undefined)
 }
 
-const viewExpediente = (expediente: any) => {
+const viewExpediente = (expediente: Expediente) => {
     router.push(`/expedientes/${expediente.id}`)
 }
 
-const editExpediente = (expediente: any) => {
+const editExpediente = (expediente: Expediente) => {
     router.push(`/expedientes/${expediente.id}/editar`)
 }
 
@@ -77,6 +78,11 @@ const formatDate = (date: string) => {
         hour: '2-digit',
         minute: '2-digit'
     })
+}
+
+// Verificar si el expediente requiere acción del usuario actual
+const needsMyAction = (expediente: Expediente) => {
+    return canApprove(expediente) || canReject(expediente)
 }
 </script>
 
@@ -142,7 +148,7 @@ const formatDate = (date: string) => {
                     </Column>
 
                     <!-- Columna Título -->
-                    <Column field="title" header="Título" :sortable="true" style="width: 30%">
+                    <Column field="title" header="Título" :sortable="true" style="width: 25%">
                         <template #body="{ data }">
                             <div>
                                 <p class="font-semibold">{{ data.title }}</p>
@@ -155,56 +161,70 @@ const formatDate = (date: string) => {
                     </Column>
 
                     <!-- Columna Estado -->
-                    <Column field="status" header="Estado" :sortable="true" style="width: 15%">
+                    <Column field="status" header="Estado" :sortable="true" style="width: 12%">
                         <template #body="{ data }">
                             <Tag :value="getStatusBadge(data.status).label"
                                 :severity="getStatusBadge(data.status).severity"
-                                :icon="getStatusBadge(data.status).icon" />
+                                :icon="'pi ' + getStatusBadge(data.status).icon" />
                         </template>
                     </Column>
 
                     <!-- Columna Nivel Actual -->
-                    <Column field="currentLevel" header="Nivel Actual" style="width: 15%">
+                    <Column field="currentLevel" header="Nivel Actual" style="width: 18%">
                         <template #body="{ data }">
-                            <span v-if="data.status === ExpedienteStatus.PENDING_APPROVAL">
-                                {{ getCurrentLevelText(data.currentLevel) }}
-                            </span>
+                            <div v-if="data.status === ExpedienteStatus.PENDING_APPROVAL">
+                                <p class="font-medium">
+                                    {{ getCurrentLevelText(data.currentLevel) }}
+                                </p>
+                                <div v-if="needsMyAction(data)" class="text-xs text-green-600 mt-1">
+                                    <i class="pi pi-info-circle mr-1"></i>
+                                    Requiere tu aprobación
+                                </div>
+                            </div>
                             <span v-else class="text-gray-400">-</span>
                         </template>
                     </Column>
 
+                    <!-- Columna Departamento -->
+                    <Column field="department.name" header="Departamento" style="width: 15%">
+                        <template #body="{ data }">
+                            <span class="text-sm">{{ data.department?.name || data.departmentId }}</span>
+                        </template>
+                    </Column>
+
                     <!-- Columna Creado Por -->
-                    <Column field="creator.fullName" header="Creado Por" style="width: 15%">
+                    <Column field="creator.fullName" header="Creado Por" style="width: 12%">
                         <template #body="{ data }">
                             <div v-if="data.creator">
-                                <p class="font-medium">{{ data.creator.fullName }}</p>
-                                <p class="text-xs text-gray-500">{{ data.department?.name }}</p>
+                                <p class="font-medium text-sm">{{ data.creator.fullName }}</p>
                             </div>
+                            <span v-else class="text-gray-400">-</span>
                         </template>
                     </Column>
 
                     <!-- Columna Fecha -->
-                    <Column field="createdAt" header="Fecha Creación" :sortable="true" style="width: 10%">
+                    <Column field="createdAt" header="Fecha" :sortable="true" style="width: 10%">
                         <template #body="{ data }">
                             <span class="text-sm">{{ formatDate(data.createdAt) }}</span>
                         </template>
                     </Column>
 
                     <!-- Columna Acciones -->
-                    <Column header="Acciones" style="width: 5%" :exportable="false">
+                    <Column header="Acciones" style="width: 8%" :exportable="false">
                         <template #body="{ data }">
                             <div class="flex gap-2 justify-end">
                                 <!-- Ver -->
                                 <Button icon="pi pi-eye" severity="info" text rounded v-tooltip.top="'Ver detalles'"
-                                    @click="viewExpediente(data)" />
+                                    @click="viewExpediente(data)" size="small" />
 
                                 <!-- Editar -->
                                 <Button v-if="canEdit(data)" icon="pi pi-pencil" severity="warning" text rounded
-                                    v-tooltip.top="'Editar'" @click="editExpediente(data)" />
+                                    v-tooltip.top="'Editar'" @click="editExpediente(data)" size="small" />
 
-                                <!-- Aprobar/Rechazar -->
-                                <Button v-if="canApprove(data)" icon="pi pi-check-circle" severity="success" text
-                                    rounded v-tooltip.top="'Gestionar aprobación'" @click="viewExpediente(data)" />
+                                <!-- Aprobar/Rechazar - Indicador visual -->
+                                <Button v-if="needsMyAction(data)" icon="pi pi-exclamation-circle" severity="success"
+                                    text rounded v-tooltip.top="'Acción requerida'" @click="viewExpediente(data)"
+                                    size="small" />
                             </div>
                         </template>
                     </Column>

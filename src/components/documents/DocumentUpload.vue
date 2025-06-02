@@ -99,7 +99,18 @@ const uploadFile = async (file: File) => {
             throw new Error(response.message || 'Error al subir documento')
         }
     } catch (error: any) {
-        const errorMessage = error.response?.data?.message || error.message || 'Error al subir el documento'
+        console.error('Error al subir documento:', error)
+
+        // Manejar error específico de CSRF
+        let errorMessage = 'Error al subir el documento'
+
+        if (error.response?.data?.message) {
+            errorMessage = error.response.data.message
+        } else if (error.message?.includes('_csrf')) {
+            errorMessage = 'Error de seguridad. Por favor, recarga la página e intenta de nuevo.'
+        } else if (error.message) {
+            errorMessage = error.message
+        }
 
         toast.add({
             severity: 'error',

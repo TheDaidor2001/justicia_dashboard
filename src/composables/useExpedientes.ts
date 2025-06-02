@@ -1,7 +1,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { useExpedientesStore } from '@/stores/expedientes'
 import { useAuth } from '@/composables/useAuth'
-import type { ExpedienteFilters, ExpedienteStatus } from '@/types/expediente'
+import type { ExpedienteFilters, ExpedienteStatus, Expediente } from '@/types/expediente'
 
 export const useExpedientes = () => {
     const expedientesStore = useExpedientesStore()
@@ -33,7 +33,7 @@ export const useExpedientes = () => {
     }
 
     // Verificar si puede editar un expediente
-    const canEdit = (expediente: any) => {
+    const canEdit = (expediente: Expediente) => {
         if (!user.value) return false
 
         // Solo el creador puede editar y solo si está en borrador o rechazado
@@ -44,7 +44,7 @@ export const useExpedientes = () => {
     }
 
     // Verificar si puede enviar para aprobación
-    const canSubmit = (expediente: any) => {
+    const canSubmit = (expediente: Expediente) => {
         if (!user.value) return false
 
         // Solo el creador puede enviar y solo si está en borrador
@@ -56,24 +56,71 @@ export const useExpedientes = () => {
 
     // Verificar si puede aprobar
     const canApprove = (expediente: any) => {
-        if (!user.value) return false
+        console.log('=== DEBUG canApprove ===')
+        console.log('User:', user.value?.email, user.value?.role)
+        console.log('User Department:', user.value?.departmentId)
+        console.log('Expediente Status:', expediente.status)
+        console.log('Expediente Level:', expediente.currentLevel)
+        console.log('Expediente Department:', expediente.departmentId)
+        console.log('Expediente Created By:', expediente.createdBy)
+        console.log('Is Presidente Audiencia:', isPresidenteAudiencia.value)
+        console.log('Is Secretario General:', isSecretarioGeneral.value)
 
-        // Verificar según el nivel actual del expediente
-        if (expediente.status !== 'pending_approval') return false
+        if (!user.value) {
+            console.log('No puede aprobar: usuario no autenticado')
+            return false
+        }
 
-        if (expediente.currentLevel === 'juez' && isPresidenteAudiencia.value) {
-            // Presidente puede aprobar expedientes en nivel juez
+        // Verificar que el expediente esté pendiente de aprobación
+        if (expediente.status !== 'pending_approval') {
+            console.log('No puede aprobar: expediente no está pending_approval')
+            return false
+        }
+
+        // FLUJO DE APROBACIÓN:
+        // 1. Nivel "juez" → Solo presidente de audiencia puede aprobar
+        // 2. Nivel "presidente_audiencia" → Solo secretario general puede aprobar
+        // 3. Nivel "secretario_general" → Nadie (ya está aprobado)
+
+        // CASO 1: Presidente de audiencia puede aprobar cuando está en nivel "juez"
+        if (isPresidenteAudiencia.value && expediente.currentLevel === 'juez') {
+            // Verificar que sea del mismo departamento
+            if (expediente.departmentId === user.value.departmentId) {
+                // Verificar que no sea el creador
+                if (expediente.createdBy !== user.value.id) {
+                    console.log('✅ Presidente puede aprobar: expediente en nivel juez de su departamento')
+                    return true
+                } else {
+                    console.log('❌ Presidente no puede aprobar: es el creador del expediente')
+                    return false
+                }
+            } else {
+                console.log('❌ Presidente no puede aprobar: expediente de otro departamento')
+                return false
+            }
+        }
+
+        // CASO 2: Secretario general puede aprobar cuando está en nivel "presidente_audiencia"
+        if (isSecretarioGeneral.value && expediente.currentLevel === 'presidente_audiencia') {
+            console.log('✅ Secretario puede aprobar: expediente en nivel presidente_audiencia')
             return true
         }
 
-        if (expediente.currentLevel === 'presidente_audiencia' && isSecretarioGeneral.value) {
-            // Secretario puede aprobar expedientes en nivel presidente
+        // CASO 3: Admin puede aprobar cualquier expediente pendiente
+        if (user.value.role === 'admin') {
+            console.log('✅ Admin puede aprobar cualquier expediente')
             return true
         }
 
+        // No cumple ninguna condición
+        console.log('❌ No puede aprobar')
+        console.log('Resumen del flujo:')
+        console.log('- Nivel "juez" → Solo presidente de audiencia del mismo depto puede aprobar')
+        console.log('- Nivel "presidente_audiencia" → Solo secretario general puede aprobar')
+        console.log('- Tu rol:', user.value.role)
+        console.log('- Nivel actual del expediente:', expediente.currentLevel)
         return false
     }
-
     // Verificar si puede rechazar
     const canReject = (expediente: any) => {
         // Mismas reglas que aprobar
@@ -94,13 +141,13 @@ export const useExpedientes = () => {
 
     // Obtener texto del nivel actual
     const getCurrentLevelText = (level: string) => {
-        const levels = {
+        const levels: Record<string, string> = {
             juez: 'Juez',
             presidente_audiencia: 'Presidente de Audiencia',
             secretario_general: 'Secretario General'
         }
 
-        return levels[level as keyof typeof levels] || level
+        return levels[level] || level
     }
 
     return {

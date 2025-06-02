@@ -62,10 +62,25 @@ export const useExpedientesStore = defineStore('expedientes', () => {
             if (response.success) {
                 expedientes.value = response.data
                 pagination.value = response.pagination
+
+                // Debug: verificar estructura de datos
+                console.log('=== DEBUG Expedientes Cargados ===')
+                response.data.forEach((exp: Expediente) => {
+                    if (exp.status === 'pending_approval') {
+                        console.log(`Expediente ${exp.caseNumber}:`, {
+                            status: exp.status,
+                            currentLevel: exp.currentLevel,
+                            departmentId: exp.departmentId,
+                            createdBy: exp.createdBy,
+                            department: exp.department
+                        })
+                    }
+                })
+
                 return { success: true }
             }
 
-            return { success: false, message: 'Error al cargar expedientes' }
+            return { success: false, message: response.message || 'Error al cargar expedientes' }
         } catch (err: any) {
             error.value = err.message || 'Error al cargar expedientes'
             return { success: false, message: error.value }
@@ -79,10 +94,17 @@ export const useExpedientesStore = defineStore('expedientes', () => {
         error.value = null
 
         try {
+            console.log('Store: Fetching expediente:', id)
             const response = await expedientesService.getExpedienteById(id)
 
             if (response.success && response.data) {
                 currentExpediente.value = response.data
+                console.log('Store: Expediente fetched:', {
+                    id: response.data.id,
+                    status: response.data.status,
+                    currentLevel: response.data.currentLevel,
+                    departmentId: response.data.departmentId
+                })
                 return { success: true, data: response.data }
             }
 

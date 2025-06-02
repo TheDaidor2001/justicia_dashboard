@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useExpedientes } from '@/composables/useExpedientes'
 import { useAuth } from '@/composables/useAuth'
@@ -20,6 +20,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Divider from 'primevue/divider'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
+import { expedientesService } from '@/services/expedientes.service'
 
 const router = useRouter()
 const route = useRoute()
@@ -79,8 +80,19 @@ const loadExpediente = async () => {
         const result = await fetchExpedienteById(expedienteId.value)
         if (result.success && result.data) {
             expediente.value = result.data
-            // Simular historial (después vendrá del backend)
-            approvalHistory.value = result.data.approvalHistory || []
+
+            // Cargar historial de aprobación
+            try {
+                const historyResult = await expedientesService.getApprovalHistory(expedienteId.value)
+                if (historyResult.success && historyResult.data) {
+                    approvalHistory.value = historyResult.data
+                } else {
+                    approvalHistory.value = []
+                }
+            } catch (historyError) {
+                console.error('Error al cargar historial:', historyError)
+                approvalHistory.value = []
+            }
         } else {
             toast.add({
                 severity: 'error',
@@ -106,6 +118,18 @@ const loadExpediente = async () => {
 onMounted(() => {
     loadExpediente()
 })
+
+// Watcher para monitorear cambios en el expediente
+watch(expediente, (newVal) => {
+    if (newVal) {
+        console.log('Expediente actualizado:', {
+            id: newVal.id,
+            status: newVal.status,
+            currentLevel: newVal.currentLevel,
+            departmentId: newVal.departmentId
+        })
+    }
+}, { deep: true })
 
 // Métodos de acción
 const handleEdit = () => {
@@ -154,7 +178,7 @@ const confirmApprove = async () => {
             })
             showApproveDialog.value = false
             approvalComments.value = ''
-            await loadExpediente()
+            await loadExpediente() // Esto recargará todo incluyendo el historial
         } else {
             toast.add({
                 severity: 'error',
@@ -193,7 +217,7 @@ const confirmReject = async () => {
             })
             showRejectDialog.value = false
             rejectionComments.value = ''
-            await loadExpediente()
+            await loadExpediente() // Esto recargará todo incluyendo el historial
         } else {
             toast.add({
                 severity: 'error',
@@ -299,6 +323,49 @@ const getHistoryColor = (action: string) => {
                             @click="showApproveDialog = true" />
                         <Button v-if="canReject(expediente)" label="Rechazar" icon="pi pi-times" severity="danger"
                             @click="showRejectDialog = true" />
+                    </div>
+                </div>
+
+                <!-- Debug info en desarrollo -->
+                <div v-if="true" class="mt-4 p-4 bg-gray-100 rounded text-sm">
+                    <p class="font-semibold mb-2">🔍 Debug Info:</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="font-semibold text-blue-600">Usuario Actual:</p>
+                            <p>Email: {{ user?.email }}</p>
+                            <p>Rol: {{ user?.role }}</p>
+                            <p>Depto: {{ user?.departmentId }}</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-green-600">Expediente:</p>
+                            <p>Estado: {{ expediente.status }}</p>
+                            <p>Nivel: {{ expediente.currentLevel }}</p>
+                            <p>Depto: {{ expediente.departmentId }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 p-3 bg-white rounded">
+                        <p class="font-semibold mb-2">📋 Flujo de Aprobación:</p>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span :class="{ 'font-bold text-green-600': expediente.currentLevel === 'juez' }">
+                                1. JUEZ (envía)
+                            </span>
+                            <i class="pi pi-arrow-right"></i>
+                            <span
+                                :class="{ 'font-bold text-green-600': expediente.currentLevel === 'presidente_audiencia' }">
+                                2. PRESIDENTE (revisa)
+                            </span>
+                            <i class="pi pi-arrow-right"></i>
+                            <span
+                                :class="{ 'font-bold text-green-600': expediente.currentLevel === 'secretario_general' }">
+                                3. SECRETARIO (aprueba)
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <p>¿Puede Aprobar?: <strong>{{ canApprove(expediente) ? '✅ SÍ' : '❌ NO' }}</strong></p>
+                        <p>¿Puede Rechazar?: <strong>{{ canReject(expediente) ? '✅ SÍ' : '❌ NO' }}</strong></p>
                     </div>
                 </div>
             </div>
