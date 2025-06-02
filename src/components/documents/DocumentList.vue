@@ -38,6 +38,7 @@ const loadDocuments = async () => {
     try {
         const response = await documentsService.getDocumentsByExpediente(props.expedienteId)
         if (response.success) {
+            console.log('Documentos cargados:', response.data) // Debug temporal
             documents.value = response.data
         }
     } catch (error) {
@@ -52,14 +53,39 @@ const loadDocuments = async () => {
     }
 }
 
-// Descargar documento
+// Formatear fecha con validación
+const formatDate = (date: string | null | undefined) => {
+    if (!date) return 'Fecha no disponible'
+
+    try {
+        const dateObj = new Date(date)
+        if (isNaN(dateObj.getTime())) {
+            return 'Fecha inválida'
+        }
+
+        return dateObj.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    } catch (error) {
+        return 'Fecha inválida'
+    }
+}
+
+// Descargar documento - versión mejorada
 const downloadDocument = async (document: Document) => {
     downloading.value = document.id
 
     try {
         const response = await documentsService.downloadDocument(document.id)
 
-        if (response.success && response.data) {
+        if (response.success && response.data?.url) {
+            // NO modificar la URL, usarla tal como viene del backend
+            console.log('URL de descarga:', response.data.url)
+
             // Abrir en nueva pestaña
             window.open(response.data.url, '_blank')
 
@@ -72,15 +98,61 @@ const downloadDocument = async (document: Document) => {
         } else {
             throw new Error('No se pudo generar el enlace de descarga')
         }
-    } catch (error) {
+    } catch (error: any) {
+        console.error('Error al descargar:', error)
+
+        // Si el error es de firma inválida, mostrar mensaje específico
+        if (error.response?.data?.error?.message?.includes('Invalid Signature')) {
+            toast.add({
+                severity: 'error',
+                summary: 'Error de descarga',
+                detail: 'El enlace de descarga ha expirado o es inválido. Por favor, recarga la página.',
+                life: 5000
+            })
+
+            // Recargar la lista de documentos para obtener URLs nuevas
+            await loadDocuments()
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo descargar el documento',
+                life: 3000
+            })
+        }
+    } finally {
+        downloading.value = null
+    }
+}
+
+// Descarga directa alternativa
+const downloadDirectly = (document: Document) => {
+    if (document.fileUrl) {
+        // Crear un enlace temporal para forzar la descarga
+        const link = window.document.createElement('a')
+        link.href = document.fileUrl
+        link.download = document.originalName || 'documento.pdf'
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+
+        // Añadir al DOM temporalmente
+        window.document.body.appendChild(link)
+        link.click()
+        window.document.body.removeChild(link)
+
+        toast.add({
+            severity: 'info',
+            summary: 'Descarga iniciada',
+            detail: 'El archivo se está descargando',
+            life: 3000
+        })
+    } else {
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Error al descargar el documento',
+            detail: 'URL del documento no disponible',
             life: 3000
         })
-    } finally {
-        downloading.value = null
     }
 }
 
@@ -128,23 +200,11 @@ const deleteDocument = async () => {
     }
 }
 
-// Verificar si puede eliminar
 const canDeleteDocument = (document: Document) => {
     if (!props.canDelete || !user.value) return false
 
     // Solo el que subió el documento o un admin puede eliminar
     return document.uploadedBy === user.value.id || user.value.role === 'admin'
-}
-
-// Formatear fecha
-const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    })
 }
 
 // Recargar documentos cuando se sube uno nuevo
@@ -196,14 +256,14 @@ defineExpose({
                 <!-- Columna Subido por -->
                 <Column field="uploader.fullName" header="Subido por" style="width: 20%">
                     <template #body="{ data }">
-                        <span>{{ data.uploader?.fullName || 'N/A' }}</span>
+                        <span>{{ data.uploader?.fullName || data.uploaderName || 'Usuario desconocido' }}</span>
                     </template>
                 </Column>
 
                 <!-- Columna Fecha -->
                 <Column field="uploadedAt" header="Fecha" :sortable="true" style="width: 20%">
                     <template #body="{ data }">
-                        <span class="text-sm">{{ formatDate(data.uploadedAt) }}</span>
+                        <span class="text-sm">{{ formatDate(data.uploadedAt || data.createdAt) }}</span>
                     </template>
                 </Column>
 
@@ -214,6 +274,10 @@ defineExpose({
                             <!-- Descargar -->
                             <Button icon="pi pi-download" severity="info" text rounded v-tooltip.top="'Descargar'"
                                 @click="downloadDocument(data)" :loading="downloading === data.id" />
+
+                            <!-- Descargar alternativo -->
+                            <Button v-if="data.fileUrl" icon="pi pi-external-link" severity="secondary" text rounded
+                                v-tooltip.top="'Abrir en nueva pestaña'" @click="downloadDirectly(data)" />
 
                             <!-- Ver (solo para imágenes) -->
                             <Image v-if="isImageFile(data.mimeType)" :src="data.fileUrl" :alt="data.originalName"

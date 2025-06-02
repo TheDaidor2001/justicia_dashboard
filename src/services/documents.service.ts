@@ -13,20 +13,20 @@ export const documentsService = {
     async uploadDocument(expedienteId: string, file: File): Promise<DocumentUploadResponse> {
         const formData = new FormData()
         formData.append('document', file)
-        // NO agregar _csrf ni otros campos que causen problemas
+        formData.append('_csrf', 'dummy-token') // Valor dummy en lugar de vacío
 
         try {
             const { data } = await axiosInstance.post<DocumentUploadResponse>(
                 API_ENDPOINTS.DOCUMENTS_UPLOAD(expedienteId),
                 formData
-                // NO headers adicionales
             )
             return data
         } catch (error: any) {
-            console.error('Error en uploadDocument:', error.response || error)
+            console.error('Upload error:', error.response?.data || error)
             throw error
         }
     },
+
     async getDocumentsByExpediente(expedienteId: string): Promise<DocumentsResponse> {
         const { data } = await axiosInstance.get<DocumentsResponse>(
             API_ENDPOINTS.DOCUMENTS_BY_EXPEDIENTE(expedienteId)

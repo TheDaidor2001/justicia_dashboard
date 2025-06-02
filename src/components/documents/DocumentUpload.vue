@@ -69,12 +69,12 @@ const uploadFile = async (file: File) => {
     uploadProgress.value = 0
 
     try {
-        // Simular progreso (el backend no provee progreso real)
+        // Simular progreso
         const progressInterval = setInterval(() => {
             if (uploadProgress.value < 90) {
                 uploadProgress.value += 10
             }
-        }, 100)
+        }, 200)
 
         const response = await documentsService.uploadDocument(props.expedienteId, file)
 
@@ -91,7 +91,6 @@ const uploadFile = async (file: File) => {
 
             emit('upload-success', response.data)
 
-            // Limpiar después de un momento
             setTimeout(() => {
                 uploadProgress.value = 0
             }, 1000)
@@ -99,15 +98,13 @@ const uploadFile = async (file: File) => {
             throw new Error(response.message || 'Error al subir documento')
         }
     } catch (error: any) {
-        console.error('Error al subir documento:', error)
+        console.error('Error completo:', error)
+        console.error('Response:', error.response)
 
-        // Manejar error específico de CSRF
         let errorMessage = 'Error al subir el documento'
 
         if (error.response?.data?.message) {
             errorMessage = error.response.data.message
-        } else if (error.message?.includes('_csrf')) {
-            errorMessage = 'Error de seguridad. Por favor, recarga la página e intenta de nuevo.'
         } else if (error.message) {
             errorMessage = error.message
         }

@@ -58,19 +58,28 @@ const rejectionComments = ref('')
 
 const expedienteId = computed(() => route.params.id as string)
 
-// Verificar si puede editar documentos
 const canEditDocuments = computed(() => {
     if (!expediente.value || !user.value) return false
 
-    // Puede editar documentos si:
-    // 1. Es el creador del expediente
-    // 2. Es un admin
-    // 3. El expediente está en estado borrador o pendiente
-    return (
-        (expediente.value.createdBy === user.value.id || user.value.role === 'admin') &&
-        (expediente.value.status === ExpedienteStatus.DRAFT ||
-            expediente.value.status === ExpedienteStatus.PENDING_APPROVAL)
-    )
+    // Solo pueden subir documentos:
+    // 1. El juez creador del expediente
+    // 2. El presidente de audiencia del departamento del expediente
+    // 3. El secretario general
+    // 4. Admin (siempre)
+
+    const isCreator = expediente.value.createdBy === user.value.id
+    const isPresidenteDelDepartamento = user.value.role === 'presidente_audiencia' &&
+        user.value.departmentId === expediente.value.departmentId
+    const isSecretarioGeneral = user.value.role === 'secretario_general'
+    const isAdmin = user.value.role === 'admin'
+
+    // Además, el expediente debe estar en draft o rejected
+    const isEditableStatus = expediente.value.status === ExpedienteStatus.DRAFT ||
+        expediente.value.status === ExpedienteStatus.REJECTED
+
+
+    // Debe cumplir con el rol Y el estado del expediente
+    return (isCreator || isPresidenteDelDepartamento || isSecretarioGeneral || isAdmin) && isEditableStatus
 })
 
 // Cargar expediente
@@ -323,49 +332,6 @@ const getHistoryColor = (action: string) => {
                             @click="showApproveDialog = true" />
                         <Button v-if="canReject(expediente)" label="Rechazar" icon="pi pi-times" severity="danger"
                             @click="showRejectDialog = true" />
-                    </div>
-                </div>
-
-                <!-- Debug info en desarrollo -->
-                <div v-if="true" class="mt-4 p-4 bg-gray-100 rounded text-sm">
-                    <p class="font-semibold mb-2">🔍 Debug Info:</p>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="font-semibold text-blue-600">Usuario Actual:</p>
-                            <p>Email: {{ user?.email }}</p>
-                            <p>Rol: {{ user?.role }}</p>
-                            <p>Depto: {{ user?.departmentId }}</p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-green-600">Expediente:</p>
-                            <p>Estado: {{ expediente.status }}</p>
-                            <p>Nivel: {{ expediente.currentLevel }}</p>
-                            <p>Depto: {{ expediente.departmentId }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 p-3 bg-white rounded">
-                        <p class="font-semibold mb-2">📋 Flujo de Aprobación:</p>
-                        <div class="flex items-center gap-2 text-xs">
-                            <span :class="{ 'font-bold text-green-600': expediente.currentLevel === 'juez' }">
-                                1. JUEZ (envía)
-                            </span>
-                            <i class="pi pi-arrow-right"></i>
-                            <span
-                                :class="{ 'font-bold text-green-600': expediente.currentLevel === 'presidente_audiencia' }">
-                                2. PRESIDENTE (revisa)
-                            </span>
-                            <i class="pi pi-arrow-right"></i>
-                            <span
-                                :class="{ 'font-bold text-green-600': expediente.currentLevel === 'secretario_general' }">
-                                3. SECRETARIO (aprueba)
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-3">
-                        <p>¿Puede Aprobar?: <strong>{{ canApprove(expediente) ? '✅ SÍ' : '❌ NO' }}</strong></p>
-                        <p>¿Puede Rechazar?: <strong>{{ canReject(expediente) ? '✅ SÍ' : '❌ NO' }}</strong></p>
                     </div>
                 </div>
             </div>

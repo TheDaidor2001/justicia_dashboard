@@ -9,7 +9,7 @@ export const documentUploadService = {
     async uploadDocument(expedienteId: string, file: File): Promise<DocumentUploadResponse> {
         const formData = new FormData()
         formData.append('document', file)
-        // NO agregar _csrf ni otros campos
+        formData.append('_csrf', '') // Añadir campo vacío para evitar el error
 
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
 
@@ -48,6 +48,7 @@ export const documentUploadService = {
             const xhr = new XMLHttpRequest()
             const formData = new FormData()
             formData.append('document', file)
+            formData.append('_csrf', '') // Añadir campo vacío para evitar el error
 
             const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
 
