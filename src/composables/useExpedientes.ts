@@ -12,6 +12,38 @@ export const useExpedientes = () => {
         expedientesStore.fetchExpedientes()
     })
 
+    // Filtrar expedientes según el rol del usuario
+    const filteredExpedientes = computed(() => {
+        if (!user.value) return []
+
+        let filtered = [...expedientesStore.expedientes]
+
+        // FILTRADO POR ROL
+        if (isJuez.value) {
+            // Los jueces solo ven sus propios expedientes
+            filtered = filtered.filter(exp => exp.createdBy === user.value!.id)
+        } else if (isPresidenteAudiencia.value) {
+            // Los presidentes solo ven expedientes pendientes de su departamento
+            filtered = filtered.filter(exp =>
+                exp.status === 'pending_approval' &&
+                exp.currentLevel === 'presidente_audiencia' &&
+                exp.departmentId === user.value!.departmentId &&
+                exp.createdBy !== user.value!.id // No puede ver los que él creó
+            )
+        } else if (isSecretarioGeneral.value) {
+            // El secretario solo ve expedientes pendientes en su nivel
+            filtered = filtered.filter(exp =>
+                exp.status === 'pending_approval' &&
+                exp.currentLevel === 'secretario_general'
+            )
+        }
+        // Los admin ven todo sin filtros
+
+        console.log(`Rol ${user.value?.role}: mostrando ${filtered.length} de ${expedientesStore.expedientes.length} expedientes`)
+
+        return filtered
+    })
+
     // Métodos para cambiar filtros
     const setStatusFilter = (status: ExpedienteStatus | undefined) => {
         expedientesStore.setFilters({ status, page: 1 })
@@ -53,6 +85,7 @@ export const useExpedientes = () => {
             (expediente.status === 'draft' || expediente.status === 'rejected')
         )
     }
+
     // Verificar si puede aprobar
     const canApprove = (expediente: any) => {
         console.log('=== DEBUG canApprove ===')
@@ -117,6 +150,7 @@ export const useExpedientes = () => {
 
         return false
     }
+
     // Verificar si puede rechazar
     const canReject = (expediente: any) => {
         // Mismas reglas que aprobar
@@ -149,16 +183,26 @@ export const useExpedientes = () => {
     return {
         // Estado del store
         expedientes: computed(() => expedientesStore.expedientes),
+        filteredExpedientes, // Expedientes filtrados por rol
         loading: computed(() => expedientesStore.loading),
         error: computed(() => expedientesStore.error),
         pagination: computed(() => expedientesStore.pagination),
         filters: computed(() => expedientesStore.filters),
 
-        // Estadísticas
-        totalExpedientes: computed(() => expedientesStore.totalExpedientes),
-        expedientesPendientes: computed(() => expedientesStore.expedientesPendientes),
-        expedientesAprobados: computed(() => expedientesStore.expedientesAprobados),
-        expedientesRechazados: computed(() => expedientesStore.expedientesRechazados),
+        // Estadísticas usando expedientes filtrados
+        totalExpedientes: computed(() => filteredExpedientes.value.length),
+        expedientesPendientes: computed(() =>
+            filteredExpedientes.value.filter(e => e.status === 'pending_approval')
+        ),
+        expedientesAprobados: computed(() =>
+            filteredExpedientes.value.filter(e => e.status === 'approved')
+        ),
+        expedientesRechazados: computed(() =>
+            filteredExpedientes.value.filter(e => e.status === 'rejected')
+        ),
+        expedientesBorrador: computed(() =>
+            filteredExpedientes.value.filter(e => e.status === 'draft')
+        ),
 
         // Métodos
         setStatusFilter,

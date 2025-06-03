@@ -5,6 +5,7 @@ import { useExpedientes } from '@/composables/useExpedientes'
 import { useAuth } from '@/composables/useAuth'
 import { ExpedienteStatus } from '@/types/expediente'
 import type { Expediente } from '@/types/expediente'
+import ExpedientesStatsCard from '@/components/expedientes/ExpedientesStatsCard.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -17,7 +18,7 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 
 const router = useRouter()
-const { canCreateExpedientes, user } = useAuth()
+const { canCreateExpedientes, user, isJuez, isPresidenteAudiencia, isSecretarioGeneral } = useAuth()
 const {
     expedientes,
     loading,
@@ -32,7 +33,13 @@ const {
     canApprove,
     canReject,
     getStatusBadge,
-    getCurrentLevelText
+    getCurrentLevelText,
+    filteredExpedientes,
+    totalExpedientes,
+    expedientesPendientes,
+    expedientesAprobados,
+    expedientesRechazados,
+    expedientesBorrador
 } = useExpedientes()
 
 // Estado local
@@ -84,15 +91,48 @@ const formatDate = (date: string) => {
 const needsMyAction = (expediente: Expediente) => {
     return canApprove(expediente) || canReject(expediente)
 }
+
+// Paginación local para expedientes filtrados
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+const paginatedExpedientes = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value
+    const end = start + itemsPerPage.value
+    return filteredExpedientes.value.slice(start, end)
+})
+
+const totalPages = computed(() =>
+    Math.ceil(filteredExpedientes.value.length / itemsPerPage.value)
+)
+
+const onPageChange = (event: any) => {
+    currentPage.value = event.page + 1
+}
 </script>
 
 <template>
     <div class="p-6">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-900">Gestión de Expedientes</h1>
-            <p class="text-gray-600 mt-2">Administra y supervisa todos los expedientes judiciales</p>
+            <h1 class="text-3xl font-bold text-gray-900">
+                <template v-if="isJuez">Mis Expedientes</template>
+                <template v-else-if="isPresidenteAudiencia">Expedientes para Aprobación</template>
+                <template v-else-if="isSecretarioGeneral">Aprobación Final de Expedientes</template>
+                <template v-else>Gestión de Expedientes</template>
+            </h1>
+            <p class="text-gray-600 mt-2">
+                <template v-if="isJuez">Administra y supervisa los expedientes que has creado</template>
+                <template v-else-if="isPresidenteAudiencia">Revisa y aprueba los expedientes de tu audiencia</template>
+                <template v-else-if="isSecretarioGeneral">Otorga la aprobación final a los expedientes</template>
+                <template v-else>Administra y supervisa todos los expedientes judiciales</template>
+            </p>
         </div>
+
+        <!-- Estadísticas -->
+        <ExpedientesStatsCard :total="totalExpedientes" :pending="expedientesPendientes.length"
+            :approved="expedientesAprobados.length" :rejected="expedientesRechazados.length"
+            :draft="expedientesBorrador?.length" />
 
         <!-- Toolbar con filtros -->
         <Card class="mb-6">
@@ -137,9 +177,10 @@ const needsMyAction = (expediente: Expediente) => {
         <!-- Tabla de expedientes -->
         <Card>
             <template #content>
-                <DataTable :value="expedientes" :loading="loading" :paginator="true" :rows="pagination.limit"
-                    :totalRecords="pagination.total" :lazy="true" @page="setPage($event.page + 1)" stripedRows
-                    showGridlines responsiveLayout="scroll" class="p-datatable-sm">
+                <DataTable :value="paginatedExpedientes" :loading="loading" :paginator="true" :rows="itemsPerPage"
+                    :totalRecords="filteredExpedientes.length" :first="(currentPage - 1) * itemsPerPage"
+                    @page="onPageChange($event)" stripedRows showGridlines responsiveLayout="scroll"
+                    class="p-datatable-sm">
                     <!-- Columna Número de Caso -->
                     <Column field="caseNumber" header="Nº Caso" :sortable="true" style="width: 10%">
                         <template #body="{ data }">
@@ -233,7 +274,22 @@ const needsMyAction = (expediente: Expediente) => {
                     <template #empty>
                         <div class="text-center py-8">
                             <i class="pi pi-inbox text-4xl text-gray-400 mb-4"></i>
-                            <p class="text-gray-500">No se encontraron expedientes</p>
+                            <p class="text-gray-500 mb-2">
+                                <template v-if="isJuez">
+                                    No tienes expedientes creados
+                                </template>
+                                <template v-else-if="isPresidenteAudiencia">
+                                    No hay expedientes pendientes de tu aprobación
+                                </template>
+                                <template v-else-if="isSecretarioGeneral">
+                                    No hay expedientes pendientes de aprobación final
+                                </template>
+                                <template v-else>
+                                    No se encontraron expedientes
+                                </template>
+                            </p>
+                            <Button v-if="canCreateExpedientes" label="Crear Expediente" icon="pi pi-plus"
+                                @click="createNewExpediente" severity="secondary" />
                         </div>
                     </template>
 
