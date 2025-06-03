@@ -155,11 +155,11 @@ export const getNewsStatusLabel = (status: NewsStatus): string => {
 
 export const getNewsStatusBadge = (status: NewsStatus) => {
     const badges = {
-        [NewsStatus.DRAFT]: { severity: 'secondary', icon: 'pi-pencil' },
-        [NewsStatus.PENDING_DIRECTOR]: { severity: 'warning', icon: 'pi-clock' },
-        [NewsStatus.PENDING_PRESIDENT]: { severity: 'info', icon: 'pi-user' },
-        [NewsStatus.PUBLISHED]: { severity: 'success', icon: 'pi-check' },
-        [NewsStatus.REJECTED]: { severity: 'danger', icon: 'pi-times' }
+        [NewsStatus.DRAFT]: { severity: 'secondary', label: 'Borrador', icon: 'pi-pencil' },
+        [NewsStatus.PENDING_DIRECTOR]: { severity: 'warning', label: 'Pendiente Director', icon: 'pi-clock' },
+        [NewsStatus.PENDING_PRESIDENT]: { severity: 'info', label: 'Pendiente Presidente', icon: 'pi-user' },
+        [NewsStatus.PUBLISHED]: { severity: 'success', label: 'Publicado', icon: 'pi-check' },
+        [NewsStatus.REJECTED]: { severity: 'danger', label: 'Rechazado', icon: 'pi-times' }
     };
     return badges[status] || badges[NewsStatus.DRAFT];
 };

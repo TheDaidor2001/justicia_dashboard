@@ -1,0 +1,262 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import Timeline from 'primevue/timeline'
+import Card from 'primevue/card'
+import Avatar from 'primevue/avatar'
+import Tag from 'primevue/tag'
+
+interface ApprovalHistoryItem {
+    id: string
+    action: string
+    comments?: string
+    createdAt: string
+    fromUser?: {
+        id: string
+        fullName: string
+        role: string
+    }
+    toUser?: {
+        id: string
+        fullName: string
+        role: string
+    }
+    fromLevel?: string
+    toLevel?: string
+}
+
+interface Props {
+    history: ApprovalHistoryItem[]
+    loading?: boolean
+    emptyMessage?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    loading: false,
+    emptyMessage: 'No hay historial de aprobación disponible'
+})
+
+// Configuración de acciones
+const actionConfig: Record<string, any> = {
+    submit: {
+        label: 'Enviado para revisión',
+        icon: 'pi-send',
+        color: '#3B82F6',
+        severity: 'info'
+    },
+    approve: {
+        label: 'Aprobado',
+        icon: 'pi-check-circle',
+        color: '#10B981',
+        severity: 'success'
+    },
+    approve_director: {
+        label: 'Aprobado por Director',
+        icon: 'pi-check-circle',
+        color: '#10B981',
+        severity: 'success'
+    },
+    approve_president: {
+        label: 'Aprobado por Presidente',
+        icon: 'pi-verified',
+        color: '#8B5CF6',
+        severity: 'success'
+    },
+    reject: {
+        label: 'Rechazado',
+        icon: 'pi-times-circle',
+        color: '#EF4444',
+        severity: 'danger'
+    },
+    return_for_revision: {
+        label: 'Devuelto para revisión',
+        icon: 'pi-replay',
+        color: '#F59E0B',
+        severity: 'warning'
+    }
+}
+
+// Obtener configuración de acción
+const getActionConfig = (action: string) => {
+    return actionConfig[action] || {
+        label: action,
+        icon: 'pi-circle',
+        color: '#6B7280',
+        severity: 'secondary'
+    }
+}
+
+// Formatear fecha relativa
+const formatRelativeDate = (date: string) => {
+    const now = new Date()
+    const actionDate = new Date(date)
+    const diffMs = now.getTime() - actionDate.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Hace un momento'
+    if (diffMins < 60) return `Hace ${diffMins} minutos`
+    if (diffHours < 24) return `Hace ${diffHours} horas`
+    if (diffDays < 7) return `Hace ${diffDays} días`
+
+    return actionDate.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
+}
+
+// Obtener iniciales del usuario
+const getUserInitials = (fullName: string) => {
+    return fullName
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+}
+
+// Formatear rol
+const formatRole = (role: string) => {
+    const roles: Record<string, string> = {
+        juez: 'Juez',
+        presidente_audiencia: 'Presidente de Audiencia',
+        secretario_general: 'Secretario General',
+        director_prensa: 'Director de Prensa',
+        tecnico_prensa: 'Técnico de Prensa',
+        presidente_cspj: 'Presidente CSPJ',
+        admin: 'Administrador'
+    }
+    return roles[role] || role.replace('_', ' ')
+}
+
+// Ordenar historial por fecha (más reciente primero)
+const sortedHistory = computed(() => {
+    return [...props.history].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+})
+</script>
+
+<template>
+    <div class="approval-timeline">
+        <!-- Loading -->
+        <div v-if="loading" class="text-center py-8">
+            <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+            <p class="text-gray-500 mt-2">Cargando historial...</p>
+        </div>
+
+        <!-- Timeline -->
+        <Timeline v-else-if="sortedHistory.length > 0" :value="sortedHistory" class="custom-timeline">
+            <template #marker="slotProps">
+                <span class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-md"
+                    :style="{ backgroundColor: getActionConfig(slotProps.item.action).color }">
+                    <i :class="`pi ${getActionConfig(slotProps.item.action).icon}`"></i>
+                </span>
+            </template>
+
+            <template #content="slotProps">
+                <Card class="mb-4 shadow-sm hover:shadow-md transition-shadow">
+                    <template #content>
+                        <!-- Header -->
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <Tag :value="getActionConfig(slotProps.item.action).label"
+                                    :severity="getActionConfig(slotProps.item.action).severity" class="text-sm" />
+                                <span class="text-sm text-gray-500">
+                                    {{ formatRelativeDate(slotProps.item.createdAt) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Usuario -->
+                        <div class="flex items-center gap-3 mb-3">
+                            <Avatar v-if="slotProps.item.fromUser"
+                                :label="getUserInitials(slotProps.item.fromUser.fullName)" shape="circle" size="small"
+                                class="bg-gray-200" />
+                            <div>
+                                <p class="font-medium text-gray-900">
+                                    {{ slotProps.item.fromUser?.fullName || 'Usuario desconocido' }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    {{ formatRole(slotProps.item.fromUser?.role || '') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Flujo -->
+                        <div v-if="slotProps.item.toUser || slotProps.item.toLevel" class="mb-3">
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                <i class="pi pi-arrow-right"></i>
+                                <span v-if="slotProps.item.toUser">
+                                    Enviado a: <strong>{{ slotProps.item.toUser.fullName }}</strong>
+                                    ({{ formatRole(slotProps.item.toUser.role) }})
+                                </span>
+                                <span v-else-if="slotProps.item.toLevel">
+                                    Enviado a: <strong>{{ formatRole(slotProps.item.toLevel) }}</strong>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Comentarios -->
+                        <div v-if="slotProps.item.comments" class="mt-3 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-sm text-gray-700 italic">
+                                <i class="pi pi-comment mr-1"></i>
+                                "{{ slotProps.item.comments }}"
+                            </p>
+                        </div>
+                    </template>
+                </Card>
+            </template>
+
+            <template #opposite="slotProps">
+                <small class="text-gray-500">
+                    {{ new Date(slotProps.item.createdAt).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    }) }}
+                </small>
+            </template>
+        </Timeline>
+
+        <!-- Empty state -->
+        <div v-else class="text-center py-12">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                <i class="pi pi-history text-2xl text-gray-400"></i>
+            </div>
+            <p class="text-gray-500">{{ emptyMessage }}</p>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+:deep(.custom-timeline) {
+    .p-timeline-event-content {
+        background-color: transparent;
+    }
+
+    .p-timeline-event-separator {
+        background-color: #e5e7eb;
+    }
+
+    .p-timeline-event-marker {
+        border: 3px solid white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+}
+
+:deep(.p-card) {
+    border: 1px solid #e5e7eb;
+
+    .p-card-content {
+        padding: 1rem;
+    }
+}
+
+:deep(.p-tag) {
+    font-weight: 500;
+}
+</style>

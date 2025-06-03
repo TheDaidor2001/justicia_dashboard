@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useExpedientes } from '@/composables/useExpedientes'
 import { useAuth } from '@/composables/useAuth'
@@ -7,17 +7,15 @@ import { ExpedienteStatus } from '@/types/expediente'
 import type { Expediente, ApprovalHistoryItem } from '@/types/expediente'
 import DocumentUpload from '@/components/documents/DocumentUpload.vue'
 import DocumentList from '@/components/documents/DocumentList.vue'
+import ApprovalDialog from '@/components/shared/ApprovalDialog.vue'
+import ApprovalTimeline from '@/components/shared/ApprovalTimeline.vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
-import Timeline from 'primevue/timeline'
 import Message from 'primevue/message'
-import Dialog from 'primevue/dialog'
-import Textarea from 'primevue/textarea'
 import ProgressSpinner from 'primevue/progressspinner'
-import Divider from 'primevue/divider'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { expedientesService } from '@/services/expedientes.service'
@@ -49,37 +47,27 @@ const expediente = ref<Expediente | null>(null)
 const loading = ref(true)
 const processingAction = ref(false)
 const approvalHistory = ref<ApprovalHistoryItem[]>([])
+const loadingHistory = ref(false)
 
 // Diálogos
 const showApproveDialog = ref(false)
 const showRejectDialog = ref(false)
-const approvalComments = ref('')
-const rejectionComments = ref('')
 
 const expedienteId = computed(() => route.params.id as string)
 
 const canEditDocuments = computed(() => {
     if (!expediente.value || !user.value) return false
 
-    // Solo pueden subir documentos:
-    // 1. El juez creador del expediente
-    // 2. El presidente de audiencia del departamento del expediente
-    // 3. El secretario general
-    // 4. Admin (siempre)
-
     const isCreator = expediente.value.createdBy === user.value.id
     const isPresidenteDelDepartamento = user.value.role === 'presidente_audiencia' &&
         user.value.departmentId === expediente.value.departmentId
-    const isSecretarioGeneral = user.value.role === 'secretario_general'
+    const isSecretarioGeneralUser = user.value.role === 'secretario_general'
     const isAdmin = user.value.role === 'admin'
 
-    // Además, el expediente debe estar en draft o rejected
     const isEditableStatus = expediente.value.status === ExpedienteStatus.DRAFT ||
         expediente.value.status === ExpedienteStatus.REJECTED
 
-
-    // Debe cumplir con el rol Y el estado del expediente
-    return (isCreator || isPresidenteDelDepartamento || isSecretarioGeneral || isAdmin) && isEditableStatus
+    return (isCreator || isPresidenteDelDepartamento || isSecretarioGeneralUser || isAdmin) && isEditableStatus
 })
 
 // Cargar expediente
@@ -89,19 +77,8 @@ const loadExpediente = async () => {
         const result = await fetchExpedienteById(expedienteId.value)
         if (result.success && result.data) {
             expediente.value = result.data
-
-            // Cargar historial de aprobación
-            try {
-                const historyResult = await expedientesService.getApprovalHistory(expedienteId.value)
-                if (historyResult.success && historyResult.data) {
-                    approvalHistory.value = historyResult.data
-                } else {
-                    approvalHistory.value = []
-                }
-            } catch (historyError) {
-                console.error('Error al cargar historial:', historyError)
-                approvalHistory.value = []
-            }
+            // Cargar historial después de cargar el expediente
+            loadApprovalHistory()
         } else {
             toast.add({
                 severity: 'error',
@@ -124,21 +101,27 @@ const loadExpediente = async () => {
     }
 }
 
+// Cargar historial de aprobación
+const loadApprovalHistory = async () => {
+    loadingHistory.value = true
+    try {
+        const historyResult = await expedientesService.getApprovalHistory(expedienteId.value)
+        if (historyResult.success && historyResult.data) {
+            approvalHistory.value = historyResult.data
+        } else {
+            approvalHistory.value = []
+        }
+    } catch (error) {
+        console.error('Error al cargar historial:', error)
+        approvalHistory.value = []
+    } finally {
+        loadingHistory.value = false
+    }
+}
+
 onMounted(() => {
     loadExpediente()
 })
-
-// Watcher para monitorear cambios en el expediente
-watch(expediente, (newVal) => {
-    if (newVal) {
-        console.log('Expediente actualizado:', {
-            id: newVal.id,
-            status: newVal.status,
-            currentLevel: newVal.currentLevel,
-            departmentId: newVal.departmentId
-        })
-    }
-}, { deep: true })
 
 // Métodos de acción
 const handleEdit = () => {
@@ -172,12 +155,10 @@ const handleSubmit = async () => {
     }
 }
 
-const confirmApprove = async () => {
+const handleApprove = async (comments: string) => {
     processingAction.value = true
     try {
-        const result = await approveExpediente(expedienteId.value, {
-            comments: approvalComments.value
-        })
+        const result = await approveExpediente(expedienteId.value, { comments })
         if (result.success) {
             toast.add({
                 severity: 'success',
@@ -186,8 +167,7 @@ const confirmApprove = async () => {
                 life: 3000
             })
             showApproveDialog.value = false
-            approvalComments.value = ''
-            await loadExpediente() // Esto recargará todo incluyendo el historial
+            await loadExpediente()
         } else {
             toast.add({
                 severity: 'error',
@@ -201,22 +181,10 @@ const confirmApprove = async () => {
     }
 }
 
-const confirmReject = async () => {
-    if (!rejectionComments.value.trim()) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Debes proporcionar un motivo de rechazo',
-            life: 3000
-        })
-        return
-    }
-
+const handleReject = async (comments: string) => {
     processingAction.value = true
     try {
-        const result = await rejectExpediente(expedienteId.value, {
-            comments: rejectionComments.value
-        })
+        const result = await rejectExpediente(expedienteId.value, { comments })
         if (result.success) {
             toast.add({
                 severity: 'success',
@@ -225,8 +193,7 @@ const confirmReject = async () => {
                 life: 3000
             })
             showRejectDialog.value = false
-            rejectionComments.value = ''
-            await loadExpediente() // Esto recargará todo incluyendo el historial
+            await loadExpediente()
         } else {
             toast.add({
                 severity: 'error',
@@ -242,9 +209,7 @@ const confirmReject = async () => {
 
 // Manejar documento subido
 const onDocumentUploaded = () => {
-    // Refrescar la lista de documentos
     documentListRef.value?.refreshDocuments()
-
     toast.add({
         severity: 'success',
         summary: 'Documento adjuntado',
@@ -262,28 +227,6 @@ const formatDate = (date: string) => {
         hour: '2-digit',
         minute: '2-digit'
     })
-}
-
-// Obtener icono para historial
-const getHistoryIcon = (action: string) => {
-    const icons: Record<string, string> = {
-        submit: 'pi-send',
-        approve: 'pi-check-circle',
-        reject: 'pi-times-circle',
-        return_for_revision: 'pi-replay'
-    }
-    return icons[action] || 'pi-circle'
-}
-
-// Obtener color para historial
-const getHistoryColor = (action: string) => {
-    const colors: Record<string, string> = {
-        submit: '#3B82F6',
-        approve: '#10B981',
-        reject: '#EF4444',
-        return_for_revision: '#F59E0B'
-    }
-    return colors[action] || '#6B7280'
 }
 </script>
 
@@ -467,97 +410,20 @@ const getHistoryColor = (action: string) => {
                     </template>
                     <Card>
                         <template #content>
-                            <Timeline v-if="approvalHistory.length > 0" :value="approvalHistory"
-                                class="customized-timeline">
-                                <template #marker="slotProps">
-                                    <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10"
-                                        :style="{ backgroundColor: getHistoryColor(slotProps.item.action) }">
-                                        <i :class="`pi ${getHistoryIcon(slotProps.item.action)}`"></i>
-                                    </span>
-                                </template>
-                                <template #content="slotProps">
-                                    <Card class="mb-4">
-                                        <template #content>
-                                            <div class="flex justify-between items-start mb-2">
-                                                <h4 class="font-semibold capitalize">
-                                                    {{ slotProps.item.action.replace('_', ' ') }}
-                                                </h4>
-                                                <small class="text-gray-500">
-                                                    {{ formatDate(slotProps.item.createdAt) }}
-                                                </small>
-                                            </div>
-                                            <p class="text-gray-700 mb-2">
-                                                <strong>{{ slotProps.item.fromUser.fullName }}</strong>
-                                                ({{ slotProps.item.fromUser.role }})
-                                                <span v-if="slotProps.item.toUser">
-                                                    → <strong>{{ slotProps.item.toUser.fullName }}</strong>
-                                                    ({{ slotProps.item.toUser.role }})
-                                                </span>
-                                            </p>
-                                            <p v-if="slotProps.item.comments" class="text-gray-600 italic">
-                                                "{{ slotProps.item.comments }}"
-                                            </p>
-                                        </template>
-                                    </Card>
-                                </template>
-                            </Timeline>
-
-                            <div v-else class="text-center py-8 text-gray-500">
-                                <i class="pi pi-history text-4xl mb-4"></i>
-                                <p>No hay historial de aprobación disponible</p>
-                            </div>
+                            <ApprovalTimeline :history="approvalHistory" :loading="loadingHistory"
+                                empty-message="No hay historial de aprobación para este expediente" />
                         </template>
                     </Card>
                 </TabPanel>
             </TabView>
         </div>
 
-        <!-- Diálogo de Aprobación -->
-        <Dialog v-model:visible="showApproveDialog" modal header="Aprobar Expediente" :style="{ width: '450px' }">
-            <div class="mb-4">
-                <label class="block mb-2">Comentarios (opcional):</label>
-                <Textarea v-model="approvalComments" rows="4" class="w-full"
-                    placeholder="Añade comentarios sobre la aprobación..." />
-            </div>
+        <!-- Diálogos usando el componente compartido -->
+        <ApprovalDialog v-model:visible="showApproveDialog" title="Expediente" type="approve"
+            :item-title="expediente?.title" :loading="processingAction" @confirm="handleApprove" />
 
-            <template #footer>
-                <Button label="Cancelar" severity="secondary" @click="showApproveDialog = false"
-                    :disabled="processingAction" />
-                <Button label="Aprobar" icon="pi pi-check" @click="confirmApprove" :loading="processingAction" />
-            </template>
-        </Dialog>
-
-        <!-- Diálogo de Rechazo -->
-        <Dialog v-model:visible="showRejectDialog" modal header="Rechazar Expediente" :style="{ width: '450px' }">
-            <div class="mb-4">
-                <label class="block mb-2">Motivo del rechazo <span class="text-red-500">*</span>:</label>
-                <Textarea v-model="rejectionComments" rows="4" class="w-full"
-                    placeholder="Explica el motivo del rechazo..."
-                    :class="{ 'p-invalid': !rejectionComments.trim() }" />
-                <small class="text-red-500" v-if="!rejectionComments.trim()">
-                    El motivo es obligatorio
-                </small>
-            </div>
-
-            <template #footer>
-                <Button label="Cancelar" severity="secondary" @click="showRejectDialog = false"
-                    :disabled="processingAction" />
-                <Button label="Rechazar" icon="pi pi-times" severity="danger" @click="confirmReject"
-                    :loading="processingAction" />
-            </template>
-        </Dialog>
+        <ApprovalDialog v-model:visible="showRejectDialog" title="Expediente" type="reject"
+            :item-title="expediente?.title" :require-comments="true" :loading="processingAction"
+            @confirm="handleReject" />
     </div>
 </template>
-
-<style scoped>
-:deep(.customized-timeline) {
-    .p-timeline-event-content {
-        background-color: transparent;
-    }
-
-    .p-timeline-event-opposite {
-        color: #6b7280;
-        font-size: 0.875rem;
-    }
-}
-</style>
