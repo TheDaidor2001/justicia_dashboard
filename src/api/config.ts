@@ -1,26 +1,11 @@
+// src/api/config.ts
+
 // Configuración base de la API
 export const API_CONFIG = {
     BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
     TIMEOUT: 30000,
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000,
-    // Biblioteca Digital
-    BOOKS_PUBLIC: '/books/public',
-    BOOKS: '/books',
-    BOOK_DETAIL: (id: string) => `/books/${id}`,
-    BOOK_DOWNLOAD: (id: string) => `/books/${id}/download`,
-    BOOKS_TAGS_POPULAR: '/books/tags/popular',
-
-    // Notificaciones
-    NOTIFICATIONS: '/notifications',
-    NOTIFICATION_READ: (id: string) => `/notifications/${id}/read`,
-    NOTIFICATIONS_READ_MULTIPLE: '/notifications/read-multiple',
-    NOTIFICATIONS_UNREAD_COUNT: '/notifications/unread-count',
-
-    // Dashboard
-    DASHBOARD_PENDING_TASKS: '/dashboard/pending-tasks',
-    DASHBOARD_SUMMARY: '/dashboard/summary',
-    DASHBOARD_STATS_BY_ROLE: '/dashboard/stats-by-role',
 };
 
 // Endpoints de la API
@@ -62,6 +47,7 @@ export const API_ENDPOINTS = {
     NEWS_APPROVE_PRESIDENT: (id: string) => `/news/${id}/approve-president`,
     NEWS_REJECT: (id: string) => `/news/${id}/reject`,
     NEWS_STATS: '/news/statistics',
+    NEWS_HISTORY: (id: string) => `/news/${id}/history`,
 
     // Contacto
     CONTACT_PUBLIC: '/contact/public',
@@ -89,6 +75,24 @@ export const API_ENDPOINTS = {
     DEPARTMENTS_STATS: '/departments/statistics',
     DEPARTMENTS_REORDER: '/departments/reorder',
     DEPARTMENT_TOGGLE: (id: string) => `/departments/${id}/toggle-status`,
+
+    // Biblioteca Digital
+    BOOKS_PUBLIC: '/books/public',
+    BOOKS: '/books',
+    BOOK_DETAIL: (id: string) => `/books/${id}`,
+    BOOK_DOWNLOAD: (id: string) => `/books/${id}/download`,
+    BOOKS_TAGS_POPULAR: '/books/tags/popular',
+
+    // Notificaciones
+    NOTIFICATIONS: '/notifications',
+    NOTIFICATION_READ: (id: string) => `/notifications/${id}/read`,
+    NOTIFICATIONS_READ_MULTIPLE: '/notifications/read-multiple',
+    NOTIFICATIONS_UNREAD_COUNT: '/notifications/unread-count',
+
+    // Dashboard
+    DASHBOARD_PENDING_TASKS: '/dashboard/pending-tasks',
+    DASHBOARD_SUMMARY: '/dashboard/summary',
+    DASHBOARD_STATS_BY_ROLE: '/dashboard/stats-by-role',
 };
 
 // Claves de almacenamiento local
