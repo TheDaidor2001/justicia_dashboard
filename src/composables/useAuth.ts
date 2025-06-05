@@ -4,132 +4,117 @@ import { useAuthStore } from '@/stores/auth'
 import type { LoginCredentials } from '@/types/auth'
 
 export const useAuth = () => {
-    const authStore = useAuthStore()
-    const router = useRouter()
+  const authStore = useAuthStore()
+  const router = useRouter()
 
-    // Inicializar auth al montar
-    onMounted(() => {
-        authStore.initializeAuth()
-    })
+  // Inicializar auth al montar
+  onMounted(() => {
+    authStore.initializeAuth()
+  })
 
-    // Login
-    const login = async (credentials: LoginCredentials) => {
-        const result = await authStore.login(credentials)
+  // Login
+  const login = async (credentials: LoginCredentials) => {
+    const result = await authStore.login(credentials)
 
-        if (result.success) {
-            // Redirigir según el rol
-            const role = result.user?.role
-
-            switch (role) {
-                case 'admin':
-                case 'presidente_cspj':
-                case 'vicepresidente_cspj':
-                case 'secretario_general':
-                    await router.push('/dashboard')
-                    break
-                case 'juez':
-                case 'presidente_audiencia':
-                    await router.push('/expedientes')
-                    break
-                case 'director_prensa':
-                case 'tecnico_prensa':
-                    await router.push('/noticias')
-                    break
-                case 'secretario_adjunto':
-                    await router.push('/contactos')
-                    break
-                default:
-                    await router.push('/dashboard')
-            }
-        }
-
-        return result
+    if (result.success) {
+      // Redirigir según el rol
+      const role = result.user?.role
+      await router.push('/dashboard')
     }
 
-    // Logout
-    const logout = async () => {
-        await authStore.logout()
-        await router.push('/login')
-    }
+    return result
+  }
 
-    // Verificar permisos
-    const hasPermission = (requiredRoles: string | string[]): boolean => {
-        const userRole = authStore.userRole
+  // Logout
+  const logout = async () => {
+    await authStore.logout()
+    await router.push('/login')
+  }
 
-        if (!userRole) return false
+  // Verificar permisos
+  const hasPermission = (requiredRoles: string | string[]): boolean => {
+    const userRole = authStore.userRole
 
-        const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles]
+    if (!userRole) return false
 
-        return roles.includes(userRole)
-    }
+    const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles]
 
-    // Verificar si puede aprobar expedientes
-    const canApproveExpedientes = computed(() => {
-        return hasPermission(['presidente_audiencia', 'secretario_general', 'admin'])
-    })
+    return roles.includes(userRole)
+  }
 
-    // Verificar si puede crear expedientes
-    const canCreateExpedientes = computed(() => {
-        return hasPermission(['juez', 'admin'])
-    })
+  // Verificar si puede aprobar expedientes
+  const canApproveExpedientes = computed(() => {
+    return hasPermission(['presidente_audiencia', 'secretario_general', 'admin'])
+  })
 
-    // Verificar si puede gestionar noticias
-    const canManageNews = computed(() => {
-        return hasPermission(['director_prensa', 'tecnico_prensa', 'presidente_cspj', 'admin'])
-    })
+  // Verificar si puede crear expedientes
+  const canCreateExpedientes = computed(() => {
+    return hasPermission(['juez', 'admin'])
+  })
 
-    // Verificar si puede aprobar noticias como presidente
-    const canApproveNewsAsPresident = computed(() => {
-        return hasPermission(['presidente_cspj', 'admin'])
-    })
+  // Verificar si puede gestionar noticias
+  const canManageNews = computed(() => {
+    return hasPermission(['director_prensa', 'tecnico_prensa', 'presidente_cspj', 'admin'])
+  })
 
-    // Verificar si puede gestionar contactos
-    const canManageContacts = computed(() => {
-        return hasPermission(['secretario_adjunto', 'secretario_general', 'presidente_cspj', 'vicepresidente_cspj', 'admin'])
-    })
+  // Verificar si puede aprobar noticias como presidente
+  const canApproveNewsAsPresident = computed(() => {
+    return hasPermission(['presidente_cspj', 'admin'])
+  })
 
-    // Verificar si puede ver auditorías
-    const canViewAudits = computed(() => {
-        return hasPermission(['admin', 'presidente_cspj', 'secretario_general'])
-    })
+  // Verificar si puede gestionar contactos
+  const canManageContacts = computed(() => {
+    return hasPermission([
+      'secretario_adjunto',
+      'secretario_general',
+      'presidente_cspj',
+      'vicepresidente_cspj',
+      'admin',
+    ])
+  })
 
-    // Verificar si puede gestionar departamentos
-    const canManageDepartments = computed(() => {
-        return hasPermission(['admin', 'presidente_cspj'])
-    })
+  // Verificar si puede ver auditorías
+  const canViewAudits = computed(() => {
+    return hasPermission(['admin', 'presidente_cspj', 'secretario_general'])
+  })
 
-    return {
-        // Estado
-        user: computed(() => authStore.user),
-        isAuthenticated: computed(() => authStore.isAuthenticated),
-        loading: computed(() => authStore.loading),
-        error: computed(() => authStore.error),
+  // Verificar si puede gestionar departamentos
+  const canManageDepartments = computed(() => {
+    return hasPermission(['admin', 'presidente_cspj'])
+  })
 
-        // Información del usuario
-        userName: computed(() => authStore.userName),
-        userRole: computed(() => authStore.userRole),
+  return {
+    // Estado
+    user: computed(() => authStore.user),
+    isAuthenticated: computed(() => authStore.isAuthenticated),
+    loading: computed(() => authStore.loading),
+    error: computed(() => authStore.error),
 
-        // Roles específicos
-        isAdmin: computed(() => authStore.isAdmin),
-        isJuez: computed(() => authStore.isJuez),
-        isPresidenteAudiencia: computed(() => authStore.isPresidenteAudiencia),
-        isSecretarioGeneral: computed(() => authStore.isSecretarioGeneral),
+    // Información del usuario
+    userName: computed(() => authStore.userName),
+    userRole: computed(() => authStore.userRole),
 
-        // Permisos
-        hasPermission,
-        canApproveExpedientes,
-        canCreateExpedientes,
-        canManageNews,
-        canApproveNewsAsPresident,
-        canManageContacts,
-        canViewAudits,
-        canManageDepartments,
+    // Roles específicos
+    isAdmin: computed(() => authStore.isAdmin),
+    isJuez: computed(() => authStore.isJuez),
+    isPresidenteAudiencia: computed(() => authStore.isPresidenteAudiencia),
+    isSecretarioGeneral: computed(() => authStore.isSecretarioGeneral),
 
-        // Acciones
-        login,
-        logout,
-        updateProfile: authStore.updateProfile,
-        changePassword: authStore.changePassword,
-        initializeAuth: authStore.initializeAuth
-    }
+    // Permisos
+    hasPermission,
+    canApproveExpedientes,
+    canCreateExpedientes,
+    canManageNews,
+    canApproveNewsAsPresident,
+    canManageContacts,
+    canViewAudits,
+    canManageDepartments,
+
+    // Acciones
+    login,
+    logout,
+    updateProfile: authStore.updateProfile,
+    changePassword: authStore.changePassword,
+    initializeAuth: authStore.initializeAuth,
+  }
 }

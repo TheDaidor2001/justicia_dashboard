@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:clean": "rm -rf node_modules/.vite && rm -rf dist && vite --force",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "clean": "rm -rf node_modules/.vite && rm -rf dist",
+    "reset": "rm -rf node_modules/.vite && rm -rf dist && pnpm install"
   },
   "dependencies": {
     "@primevue/themes": "^4.3.4",
@@ -23,6 +26,7 @@
     "pinia": "^3.0.1",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.4",
+    "quill": "^2.0.3",
     "tailwindcss": "^4.1.8",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"

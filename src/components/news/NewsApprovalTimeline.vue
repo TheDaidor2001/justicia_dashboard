@@ -4,28 +4,10 @@ import Timeline from 'primevue/timeline'
 import Card from 'primevue/card'
 import Avatar from 'primevue/avatar'
 import Tag from 'primevue/tag'
-
-interface ApprovalHistoryItem {
-  id: string
-  action: string
-  comments?: string
-  createdAt: string
-  fromUser?: {
-    id: string
-    fullName: string
-    role: string
-  }
-  toUser?: {
-    id: string
-    fullName: string
-    role: string
-  }
-  fromLevel?: string
-  toLevel?: string
-}
+import type { NewsApprovalHistory } from '@/types/news'
 
 interface Props {
-  history: ApprovalHistoryItem[]
+  history: NewsApprovalHistory[]
   loading?: boolean
   emptyMessage?: string
 }
@@ -35,30 +17,42 @@ const props = withDefaults(defineProps<Props>(), {
   emptyMessage: 'No hay historial de aprobación disponible',
 })
 
-// Configuración de acciones
+// Configuración de acciones específicas para noticias
 const actionConfig: Record<string, any> = {
-  submit: {
-    label: 'Enviado para revisión',
+  create: {
+    label: 'Noticia creada',
+    icon: 'pi-plus-circle',
+    color: '#6B7280',
+    severity: 'secondary',
+  },
+  submit_to_director: {
+    label: 'Enviado al Director de Prensa',
     icon: 'pi-send',
     color: '#3B82F6',
     severity: 'info',
   },
-  approve: {
-    label: 'Aprobado',
+  approve_director: {
+    label: 'Aprobado por Director de Prensa',
     icon: 'pi-check-circle',
     color: '#10B981',
     severity: 'success',
   },
-  approve_director: {
-    label: 'Aprobado por Director',
-    icon: 'pi-check-circle',
-    color: '#10B981',
-    severity: 'success',
+  submit_to_president: {
+    label: 'Enviado al Presidente CSPJ',
+    icon: 'pi-send',
+    color: '#8B5CF6',
+    severity: 'info',
   },
   approve_president: {
-    label: 'Aprobado por Presidente',
+    label: 'Aprobado por Presidente CSPJ',
     icon: 'pi-verified',
     color: '#8B5CF6',
+    severity: 'success',
+  },
+  publish: {
+    label: 'Publicado',
+    icon: 'pi-globe',
+    color: '#059669',
     severity: 'success',
   },
   reject: {
@@ -67,11 +61,17 @@ const actionConfig: Record<string, any> = {
     color: '#EF4444',
     severity: 'danger',
   },
-  return_for_revision: {
-    label: 'Devuelto para revisión',
-    icon: 'pi-replay',
+  edit: {
+    label: 'Editado',
+    icon: 'pi-pencil',
     color: '#F59E0B',
     severity: 'warning',
+  },
+  submit_from_court: {
+    label: 'Enviado desde Juzgado',
+    icon: 'pi-building',
+    color: '#7C3AED',
+    severity: 'help',
   },
 }
 
@@ -79,7 +79,7 @@ const actionConfig: Record<string, any> = {
 const getActionConfig = (action: string) => {
   return (
     actionConfig[action] || {
-      label: action,
+      label: action.replace('_', ' '),
       icon: 'pi-circle',
       color: '#6B7280',
       severity: 'secondary',
@@ -120,15 +120,15 @@ const getUserInitials = (fullName: string) => {
     .slice(0, 2)
 }
 
-// Formatear rol
+// Formatear rol específico para noticias
 const formatRole = (role: string) => {
   const roles: Record<string, string> = {
     juez: 'Juez',
     presidente_audiencia: 'Presidente de Audiencia',
-    secretario_general: 'Secretario General',
     director_prensa: 'Director de Prensa',
     tecnico_prensa: 'Técnico de Prensa',
     presidente_cspj: 'Presidente CSPJ',
+    vicepresidente_cspj: 'Vicepresidente CSPJ',
     admin: 'Administrador',
   }
   return roles[role] || role.replace('_', ' ')
@@ -143,7 +143,7 @@ const sortedHistory = computed(() => {
 </script>
 
 <template>
-  <div class="approval-timeline">
+  <div class="news-approval-timeline">
     <!-- Loading -->
     <div v-if="loading" class="text-center py-8">
       <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
@@ -181,33 +181,33 @@ const sortedHistory = computed(() => {
             <!-- Usuario -->
             <div class="flex items-center gap-3 mb-3">
               <Avatar
-                v-if="slotProps.item.fromUser"
-                :label="getUserInitials(slotProps.item.fromUser.fullName)"
+                v-if="slotProps.item.user"
+                :label="getUserInitials(slotProps.item.user.fullName)"
                 shape="circle"
                 size="small"
                 class="bg-gray-200"
               />
               <div>
                 <p class="font-medium text-gray-900">
-                  {{ slotProps.item.fromUser?.fullName || 'Usuario desconocido' }}
+                  {{ slotProps.item.user?.fullName || 'Usuario desconocido' }}
                 </p>
                 <p class="text-xs text-gray-500">
-                  {{ formatRole(slotProps.item.fromUser?.role || '') }}
+                  {{ formatRole(slotProps.item.user?.role || '') }}
                 </p>
               </div>
             </div>
 
-            <!-- Flujo -->
-            <div v-if="slotProps.item.toUser || slotProps.item.toLevel" class="mb-3">
+            <!-- Estado anterior y nuevo -->
+            <div v-if="slotProps.item.fromStatus || slotProps.item.toStatus" class="mb-3">
               <div class="flex items-center gap-2 text-sm text-gray-600">
                 <i class="pi pi-arrow-right"></i>
-                <span v-if="slotProps.item.toUser">
-                  Enviado a: <strong>{{ slotProps.item.toUser.fullName }}</strong> ({{
-                    formatRole(slotProps.item.toUser.role)
-                  }})
+                <span v-if="slotProps.item.fromStatus && slotProps.item.toStatus">
+                  <span class="text-red-600">{{ slotProps.item.fromStatus }}</span>
+                  →
+                  <span class="text-green-600">{{ slotProps.item.toStatus }}</span>
                 </span>
-                <span v-else-if="slotProps.item.toLevel">
-                  Enviado a: <strong>{{ formatRole(slotProps.item.toLevel) }}</strong>
+                <span v-else-if="slotProps.item.toStatus">
+                  Estado: <strong>{{ slotProps.item.toStatus }}</strong>
                 </span>
               </div>
             </div>
@@ -217,6 +217,14 @@ const sortedHistory = computed(() => {
               <p class="text-sm text-gray-700 italic">
                 <i class="pi pi-comment mr-1"></i>
                 "{{ slotProps.item.comments }}"
+              </p>
+            </div>
+
+            <!-- Información adicional según acción -->
+            <div v-if="slotProps.item.action === 'publish'" class="mt-3 p-3 bg-green-50 rounded-lg">
+              <p class="text-sm text-green-700">
+                <i class="pi pi-globe mr-1"></i>
+                La noticia está ahora visible públicamente
               </p>
             </div>
           </template>

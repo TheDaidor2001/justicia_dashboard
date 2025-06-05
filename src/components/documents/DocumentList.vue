@@ -13,12 +13,12 @@ import { useToast } from 'primevue/usetoast'
 import { useAuth } from '@/composables/useAuth'
 
 const props = defineProps<{
-    expedienteId: string
-    canDelete?: boolean
+  expedienteId: string
+  canDelete?: boolean
 }>()
 
 const emit = defineEmits<{
-    'document-deleted': [documentId: string]
+  'document-deleted': [documentId: string]
 }>()
 
 const toast = useToast()
@@ -34,310 +34,365 @@ const showDeleteDialog = ref(false)
 
 // Cargar documentos
 const loadDocuments = async () => {
-    loading.value = true
-    try {
-        const response = await documentsService.getDocumentsByExpediente(props.expedienteId)
-        if (response.success) {
-            console.log('Documentos cargados:', response.data) // Debug temporal
-            documents.value = response.data
-        }
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al cargar los documentos',
-            life: 3000
-        })
-    } finally {
-        loading.value = false
+  loading.value = true
+  try {
+    const response = await documentsService.getDocumentsByExpediente(props.expedienteId)
+    if (response.success) {
+      console.log('Documentos cargados:', response.data) // Debug temporal
+      documents.value = response.data
     }
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Error al cargar los documentos',
+      life: 3000,
+    })
+  } finally {
+    loading.value = false
+  }
 }
 
 // Formatear fecha con validación
 const formatDate = (date: string | null | undefined) => {
-    if (!date) return 'Fecha no disponible'
+  if (!date) return 'Fecha no disponible'
 
-    try {
-        const dateObj = new Date(date)
-        if (isNaN(dateObj.getTime())) {
-            return 'Fecha inválida'
-        }
-
-        return dateObj.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    } catch (error) {
-        return 'Fecha inválida'
+  try {
+    const dateObj = new Date(date)
+    if (isNaN(dateObj.getTime())) {
+      return 'Fecha inválida'
     }
+
+    return dateObj.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch (error) {
+    return 'Fecha inválida'
+  }
 }
 
 // Descargar documento - versión mejorada
 const downloadDocument = async (document: Document) => {
-    downloading.value = document.id
+  downloading.value = document.id
 
-    try {
-        const response = await documentsService.downloadDocument(document.id)
+  try {
+    const response = await documentsService.downloadDocument(document.id)
 
-        if (response.success && response.data?.url) {
-            // NO modificar la URL, usarla tal como viene del backend
-            console.log('URL de descarga:', response.data.url)
+    if (response.success && response.data?.url) {
+      // NO modificar la URL, usarla tal como viene del backend
+      console.log('URL de descarga:', response.data.url)
 
-            // Abrir en nueva pestaña
-            window.open(response.data.url, '_blank')
+      // Abrir en nueva pestaña
+      window.open(response.data.url, '_blank')
 
-            toast.add({
-                severity: 'info',
-                summary: 'Descarga iniciada',
-                detail: `Descargando ${document.originalName}`,
-                life: 3000
-            })
-        } else {
-            throw new Error('No se pudo generar el enlace de descarga')
-        }
-    } catch (error: any) {
-        console.error('Error al descargar:', error)
-
-        // Si el error es de firma inválida, mostrar mensaje específico
-        if (error.response?.data?.error?.message?.includes('Invalid Signature')) {
-            toast.add({
-                severity: 'error',
-                summary: 'Error de descarga',
-                detail: 'El enlace de descarga ha expirado o es inválido. Por favor, recarga la página.',
-                life: 5000
-            })
-
-            // Recargar la lista de documentos para obtener URLs nuevas
-            await loadDocuments()
-        } else {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'No se pudo descargar el documento',
-                life: 3000
-            })
-        }
-    } finally {
-        downloading.value = null
+      toast.add({
+        severity: 'info',
+        summary: 'Descarga iniciada',
+        detail: `Descargando ${document.originalName}`,
+        life: 3000,
+      })
+    } else {
+      throw new Error('No se pudo generar el enlace de descarga')
     }
+  } catch (error: any) {
+    console.error('Error al descargar:', error)
+
+    // Si el error es de firma inválida, mostrar mensaje específico
+    if (error.response?.data?.error?.message?.includes('Invalid Signature')) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error de descarga',
+        detail: 'El enlace de descarga ha expirado o es inválido. Por favor, recarga la página.',
+        life: 5000,
+      })
+
+      // Recargar la lista de documentos para obtener URLs nuevas
+      await loadDocuments()
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo descargar el documento',
+        life: 3000,
+      })
+    }
+  } finally {
+    downloading.value = null
+  }
 }
 
 // Descarga directa alternativa
 const downloadDirectly = (document: Document) => {
-    if (document.fileUrl) {
-        // Crear un enlace temporal para forzar la descarga
-        const link = window.document.createElement('a')
-        link.href = document.fileUrl
-        link.download = document.originalName || 'documento.pdf'
-        link.target = '_blank'
-        link.rel = 'noopener noreferrer'
+  if (document.fileUrl) {
+    // Crear un enlace temporal para forzar la descarga
+    const link = window.document.createElement('a')
+    link.href = document.fileUrl
+    link.download = document.originalName || 'documento.pdf'
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
 
-        // Añadir al DOM temporalmente
-        window.document.body.appendChild(link)
-        link.click()
-        window.document.body.removeChild(link)
+    // Añadir al DOM temporalmente
+    window.document.body.appendChild(link)
+    link.click()
+    window.document.body.removeChild(link)
 
-        toast.add({
-            severity: 'info',
-            summary: 'Descarga iniciada',
-            detail: 'El archivo se está descargando',
-            life: 3000
-        })
-    } else {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'URL del documento no disponible',
-            life: 3000
-        })
-    }
+    toast.add({
+      severity: 'info',
+      summary: 'Descarga iniciada',
+      detail: 'El archivo se está descargando',
+      life: 3000,
+    })
+  } else {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'URL del documento no disponible',
+      life: 3000,
+    })
+  }
 }
 
 // Confirmar eliminación
 const confirmDelete = (document: Document) => {
-    selectedDocument.value = document
-    showDeleteDialog.value = true
+  selectedDocument.value = document
+  showDeleteDialog.value = true
 }
 
 // Eliminar documento
 const deleteDocument = async () => {
-    if (!selectedDocument.value) return
+  if (!selectedDocument.value) return
 
-    deleting.value = selectedDocument.value.id
+  deleting.value = selectedDocument.value.id
 
-    try {
-        const response = await documentsService.deleteDocument(selectedDocument.value.id)
+  try {
+    const response = await documentsService.deleteDocument(selectedDocument.value.id)
 
-        if (response.success) {
-            // Remover de la lista local
-            documents.value = documents.value.filter(d => d.id !== selectedDocument.value!.id)
+    if (response.success) {
+      // Remover de la lista local
+      documents.value = documents.value.filter((d) => d.id !== selectedDocument.value!.id)
 
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: 'Documento eliminado correctamente',
-                life: 3000
-            })
+      toast.add({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Documento eliminado correctamente',
+        life: 3000,
+      })
 
-            emit('document-deleted', selectedDocument.value.id)
-            showDeleteDialog.value = false
-        } else {
-            throw new Error(response.message || 'Error al eliminar')
-        }
-    } catch (error: any) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: error.response?.data?.message || 'Error al eliminar el documento',
-            life: 3000
-        })
-    } finally {
-        deleting.value = null
-        selectedDocument.value = null
+      emit('document-deleted', selectedDocument.value.id)
+      showDeleteDialog.value = false
+    } else {
+      throw new Error(response.message || 'Error al eliminar')
     }
+  } catch (error: any) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.response?.data?.message || 'Error al eliminar el documento',
+      life: 3000,
+    })
+  } finally {
+    deleting.value = null
+    selectedDocument.value = null
+  }
 }
 
 const canDeleteDocument = (document: Document) => {
-    if (!props.canDelete || !user.value) return false
+  if (!props.canDelete || !user.value) return false
 
-    // Solo el que subió el documento o un admin puede eliminar
-    return document.uploadedBy === user.value.id || user.value.role === 'admin'
+  // Solo el que subió el documento o un admin puede eliminar
+  return document.uploadedBy === user.value.id || user.value.role === 'admin'
 }
 
 // Recargar documentos cuando se sube uno nuevo
 const refreshDocuments = () => {
-    loadDocuments()
+  loadDocuments()
 }
 
 // Montar
 onMounted(() => {
-    loadDocuments()
+  loadDocuments()
 })
 
 // Exponer método para refrescar
 defineExpose({
-    refreshDocuments
+  refreshDocuments,
 })
 </script>
 
 <template>
-    <div class="document-list">
-        <!-- Loading -->
-        <div v-if="loading" class="flex justify-center py-8">
-            <ProgressSpinner />
-        </div>
-
-        <!-- Lista de documentos -->
-        <div v-else-if="documents.length > 0">
-            <DataTable :value="documents" stripedRows showGridlines responsiveLayout="scroll" class="p-datatable-sm">
-                <!-- Columna Archivo -->
-                <Column field="originalName" header="Archivo" :sortable="true" style="width: 40%">
-                    <template #body="{ data }">
-                        <div class="flex items-center gap-3">
-                            <!-- Icono o miniatura -->
-                            <div v-if="isImageFile(data.mimeType)" class="w-10 h-10 rounded overflow-hidden">
-                                <Image :src="data.fileUrl" :alt="data.originalName" preview
-                                    class="w-full h-full object-cover" />
-                            </div>
-                            <i v-else :class="`pi ${getFileIcon(data.mimeType)} text-2xl text-gray-600`"></i>
-
-                            <!-- Nombre del archivo -->
-                            <div>
-                                <p class="font-medium">{{ data.originalName }}</p>
-                                <p class="text-xs text-gray-500">{{ formatFileSize(data.fileSize) }}</p>
-                            </div>
-                        </div>
-                    </template>
-                </Column>
-
-                <!-- Columna Subido por -->
-                <Column field="uploader.fullName" header="Subido por" style="width: 20%">
-                    <template #body="{ data }">
-                        <span>{{ data.uploader?.fullName || data.uploaderName || 'Usuario desconocido' }}</span>
-                    </template>
-                </Column>
-
-                <!-- Columna Fecha -->
-                <Column field="uploadedAt" header="Fecha" :sortable="true" style="width: 20%">
-                    <template #body="{ data }">
-                        <span class="text-sm">{{ formatDate(data.uploadedAt || data.createdAt) }}</span>
-                    </template>
-                </Column>
-
-                <!-- Columna Acciones -->
-                <Column header="Acciones" style="width: 20%" :exportable="false">
-                    <template #body="{ data }">
-                        <div class="flex gap-2 justify-end">
-                            <!-- Descargar -->
-                            <Button icon="pi pi-download" severity="info" text rounded v-tooltip.top="'Descargar'"
-                                @click="downloadDocument(data)" :loading="downloading === data.id" />
-
-                            <!-- Descargar alternativo -->
-                            <Button v-if="data.fileUrl" icon="pi pi-external-link" severity="secondary" text rounded
-                                v-tooltip.top="'Abrir en nueva pestaña'" @click="downloadDirectly(data)" />
-
-                            <!-- Ver (solo para imágenes) -->
-                            <Image v-if="isImageFile(data.mimeType)" :src="data.fileUrl" :alt="data.originalName"
-                                preview class="hidden">
-                                <template #previewicon>
-                                    <Button icon="pi pi-eye" severity="secondary" text rounded
-                                        v-tooltip.top="'Ver imagen'" />
-                                </template>
-                            </Image>
-
-                            <!-- Eliminar -->
-                            <Button v-if="canDeleteDocument(data)" icon="pi pi-trash" severity="danger" text rounded
-                                v-tooltip.top="'Eliminar'" @click="confirmDelete(data)"
-                                :loading="deleting === data.id" />
-                        </div>
-                    </template>
-                </Column>
-            </DataTable>
-        </div>
-
-        <!-- Sin documentos -->
-        <div v-else class="text-center py-8">
-            <i class="pi pi-folder-open text-4xl text-gray-400 mb-4"></i>
-            <p class="text-gray-500">No hay documentos adjuntos</p>
-        </div>
-
-        <!-- Diálogo de confirmación -->
-        <Dialog v-model:visible="showDeleteDialog" modal header="Confirmar eliminación" :style="{ width: '450px' }">
-            <div class="flex items-center gap-4">
-                <i class="pi pi-exclamation-triangle text-4xl text-orange-500"></i>
-                <div>
-                    <p>¿Estás seguro de eliminar este documento?</p>
-                    <p class="font-semibold mt-2" v-if="selectedDocument">
-                        {{ selectedDocument.originalName }}
-                    </p>
-                    <p class="text-sm text-gray-500 mt-1">Esta acción no se puede deshacer.</p>
-                </div>
-            </div>
-
-            <template #footer>
-                <Button label="Cancelar" severity="secondary" @click="showDeleteDialog = false"
-                    :disabled="deleting !== null" />
-                <Button label="Eliminar" icon="pi pi-trash" severity="danger" @click="deleteDocument"
-                    :loading="deleting !== null" />
-            </template>
-        </Dialog>
+  <div class="document-list">
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-8">
+      <ProgressSpinner />
     </div>
+
+    <!-- Lista de documentos -->
+    <div v-else-if="documents.length > 0">
+      <DataTable
+        :value="documents"
+        stripedRows
+        showGridlines
+        responsiveLayout="scroll"
+        class="p-datatable-sm"
+      >
+        <!-- Columna Archivo -->
+        <Column field="originalName" header="Archivo" :sortable="true" style="width: 40%">
+          <template #body="{ data }">
+            <div class="flex items-center gap-3">
+              <!-- Icono o miniatura -->
+              <div v-if="isImageFile(data.mimeType)" class="w-10 h-10 rounded overflow-hidden">
+                <Image
+                  :src="data.fileUrl"
+                  :alt="data.originalName"
+                  preview
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <i v-else :class="`pi ${getFileIcon(data.mimeType)} text-2xl text-gray-600`"></i>
+
+              <!-- Nombre del archivo -->
+              <div>
+                <p class="font-medium">{{ data.originalName }}</p>
+                <p class="text-xs text-gray-500">{{ formatFileSize(data.fileSize) }}</p>
+              </div>
+            </div>
+          </template>
+        </Column>
+
+        <!-- Columna Subido por -->
+        <Column field="uploader.fullName" header="Subido por" style="width: 20%">
+          <template #body="{ data }">
+            <span>{{ data.uploader?.fullName || data.uploaderName || 'Usuario desconocido' }}</span>
+          </template>
+        </Column>
+
+        <!-- Columna Fecha -->
+        <Column field="uploadedAt" header="Fecha" :sortable="true" style="width: 20%">
+          <template #body="{ data }">
+            <span class="text-sm">{{ formatDate(data.uploadedAt || data.createdAt) }}</span>
+          </template>
+        </Column>
+
+        <!-- Columna Acciones -->
+        <Column header="Acciones" style="width: 20%" :exportable="false">
+          <template #body="{ data }">
+            <div class="flex gap-2 justify-end">
+              <!-- Descargar -->
+              <Button
+                icon="pi pi-download"
+                severity="info"
+                text
+                rounded
+                v-tooltip.top="'Descargar'"
+                @click="downloadDocument(data)"
+                :loading="downloading === data.id"
+              />
+
+              <!-- Descargar alternativo -->
+              <Button
+                v-if="data.fileUrl"
+                icon="pi pi-external-link"
+                severity="secondary"
+                text
+                rounded
+                v-tooltip.top="'Abrir en nueva pestaña'"
+                @click="downloadDirectly(data)"
+              />
+
+              <!-- Ver (solo para imágenes) -->
+              <Image
+                v-if="isImageFile(data.mimeType)"
+                :src="data.fileUrl"
+                :alt="data.originalName"
+                preview
+                class="hidden"
+              >
+                <template #previewicon>
+                  <Button
+                    icon="pi pi-eye"
+                    severity="secondary"
+                    text
+                    rounded
+                    v-tooltip.top="'Ver imagen'"
+                  />
+                </template>
+              </Image>
+
+              <!-- Eliminar -->
+              <Button
+                v-if="canDeleteDocument(data)"
+                icon="pi pi-trash"
+                severity="danger"
+                text
+                rounded
+                v-tooltip.top="'Eliminar'"
+                @click="confirmDelete(data)"
+                :loading="deleting === data.id"
+              />
+            </div>
+          </template>
+        </Column>
+      </DataTable>
+    </div>
+
+    <!-- Sin documentos -->
+    <div v-else class="text-center py-8">
+      <i class="pi pi-folder-open text-4xl text-gray-400 mb-4"></i>
+      <p class="text-gray-500">No hay documentos adjuntos</p>
+    </div>
+
+    <!-- Diálogo de confirmación -->
+    <Dialog
+      v-model:visible="showDeleteDialog"
+      modal
+      header="Confirmar eliminación"
+      :style="{ width: '450px' }"
+    >
+      <div class="flex items-center gap-4">
+        <i class="pi pi-exclamation-triangle text-4xl text-orange-500"></i>
+        <div>
+          <p>¿Estás seguro de eliminar este documento?</p>
+          <p class="font-semibold mt-2" v-if="selectedDocument">
+            {{ selectedDocument.originalName }}
+          </p>
+          <p class="text-sm text-gray-500 mt-1">Esta acción no se puede deshacer.</p>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Cancelar"
+          severity="secondary"
+          @click="showDeleteDialog = false"
+          :disabled="deleting !== null"
+        />
+        <Button
+          label="Eliminar"
+          icon="pi pi-trash"
+          severity="danger"
+          @click="deleteDocument"
+          :loading="deleting !== null"
+        />
+      </template>
+    </Dialog>
+  </div>
 </template>
 
 <style scoped>
 :deep(.p-datatable) {
-    .p-datatable-header {
-        background-color: transparent;
-        border: none;
-    }
+  .p-datatable-header {
+    background-color: transparent;
+    border: none;
+  }
 
-    .p-datatable-thead>tr>th {
-        background-color: #f8f9fa;
-        color: #495057;
-        font-weight: 600;
-    }
+  .p-datatable-thead > tr > th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+  }
 }
 </style>

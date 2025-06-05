@@ -7,49 +7,79 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/dashboard'
+      redirect: '/dashboard',
     },
     {
       path: '/login',
       name: 'login',
       component: () => import('@/views/auth/LoginView.vue'),
-      meta: { requiresAuth: false }
+      meta: { requiresAuth: false },
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('@/views/dashboard/DashboardView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/expedientes',
       name: 'expedientes',
       component: () => import('@/views/expedientes/ExpedientesListView.vue'),
       beforeEnter: expedientesGuard,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/expedientes/nuevo',
       name: 'expediente-nuevo',
       component: () => import('@/views/expedientes/ExpedienteFormView.vue'),
       beforeEnter: juezGuard,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/expedientes/:id',
       name: 'expediente-detalle',
       component: () => import('@/views/expedientes/ExpedienteDetailView.vue'),
       beforeEnter: expedientesGuard,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/expedientes/:id/editar',
       name: 'expediente-editar',
       component: () => import('@/views/expedientes/ExpedienteFormView.vue'),
       beforeEnter: juezGuard,
-      meta: { requiresAuth: true }
-    }
-  ]
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/noticias',
+      name: 'noticias',
+      component: () => import('@/views/news/NewsListView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/noticias/nueva',
+      name: 'noticia-nueva',
+      component: () => import('@/views/news/NewsFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/noticias/enviar-juzgado',
+      name: 'noticia-enviar-juzgado',
+      component: () => import('@/views/news/NewsFormView.vue'),
+      meta: { requiresAuth: true, courtSubmission: true },
+    },
+    {
+      path: '/noticias/:id',
+      name: 'noticia-detalle',
+      component: () => import('@/views/news/NewsDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/noticias/:id/editar',
+      name: 'noticia-editar',
+      component: () => import('@/views/news/NewsFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+  ],
 })
 
 // Guard global para verificar autenticación en TODAS las rutas

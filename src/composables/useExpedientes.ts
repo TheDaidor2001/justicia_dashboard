@@ -4,224 +4,231 @@ import { useAuth } from '@/composables/useAuth'
 import type { ExpedienteFilters, ExpedienteStatus, Expediente } from '@/types/expediente'
 
 export const useExpedientes = () => {
-    const expedientesStore = useExpedientesStore()
-    const { user, isJuez, isPresidenteAudiencia, isSecretarioGeneral } = useAuth()
+  const expedientesStore = useExpedientesStore()
+  const { user, isJuez, isPresidenteAudiencia, isSecretarioGeneral } = useAuth()
 
-    // Cargar expedientes al montar
-    onMounted(() => {
-        expedientesStore.fetchExpedientes()
-    })
+  // Cargar expedientes al montar
+  onMounted(() => {
+    expedientesStore.fetchExpedientes()
+  })
 
-    // Filtrar expedientes según el rol del usuario
-    const filteredExpedientes = computed(() => {
-        if (!user.value) return []
+  // Filtrar expedientes según el rol del usuario
+  const filteredExpedientes = computed(() => {
+    if (!user.value) return []
 
-        let filtered = [...expedientesStore.expedientes]
+    let filtered = [...expedientesStore.expedientes]
 
-        // FILTRADO POR ROL
-        if (isJuez.value) {
-            // Los jueces solo ven sus propios expedientes
-            filtered = filtered.filter(exp => exp.createdBy === user.value!.id)
-        } else if (isPresidenteAudiencia.value) {
-            // Los presidentes solo ven expedientes pendientes de su departamento
-            filtered = filtered.filter(exp =>
-                exp.status === 'pending_approval' &&
-                exp.currentLevel === 'presidente_audiencia' &&
-                exp.departmentId === user.value!.departmentId &&
-                exp.createdBy !== user.value!.id // No puede ver los que él creó
-            )
-        } else if (isSecretarioGeneral.value) {
-            // El secretario solo ve expedientes pendientes en su nivel
-            filtered = filtered.filter(exp =>
-                exp.status === 'pending_approval' &&
-                exp.currentLevel === 'secretario_general'
-            )
-        }
-        // Los admin ven todo sin filtros
+    // FILTRADO POR ROL
+    if (isJuez.value) {
+      // Los jueces solo ven sus propios expedientes
+      filtered = filtered.filter((exp) => exp.createdBy === user.value!.id)
+    } else if (isPresidenteAudiencia.value) {
+      // Los presidentes solo ven expedientes pendientes de su departamento
+      filtered = filtered.filter(
+        (exp) =>
+          exp.status === 'pending_approval' &&
+          exp.currentLevel === 'presidente_audiencia' &&
+          exp.departmentId === user.value!.departmentId &&
+          exp.createdBy !== user.value!.id, // No puede ver los que él creó
+      )
+    } else if (isSecretarioGeneral.value) {
+      // El secretario solo ve expedientes pendientes en su nivel
+      filtered = filtered.filter(
+        (exp) => exp.status === 'pending_approval' && exp.currentLevel === 'secretario_general',
+      )
+    }
+    // Los admin ven todo sin filtros
 
-        console.log(`Rol ${user.value?.role}: mostrando ${filtered.length} de ${expedientesStore.expedientes.length} expedientes`)
+    console.log(
+      `Rol ${user.value?.role}: mostrando ${filtered.length} de ${expedientesStore.expedientes.length} expedientes`,
+    )
 
-        return filtered
-    })
+    return filtered
+  })
 
-    // Métodos para cambiar filtros
-    const setStatusFilter = (status: ExpedienteStatus | undefined) => {
-        expedientesStore.setFilters({ status, page: 1 })
-        expedientesStore.fetchExpedientes()
+  // Métodos para cambiar filtros
+  const setStatusFilter = (status: ExpedienteStatus | undefined) => {
+    expedientesStore.setFilters({ status, page: 1 })
+    expedientesStore.fetchExpedientes()
+  }
+
+  const setSearchFilter = (search: string) => {
+    expedientesStore.setFilters({ search, page: 1 })
+    expedientesStore.fetchExpedientes()
+  }
+
+  const setPage = (page: number) => {
+    expedientesStore.setFilters({ page })
+    expedientesStore.fetchExpedientes()
+  }
+
+  const refreshExpedientes = () => {
+    expedientesStore.fetchExpedientes()
+  }
+
+  // Verificar si puede editar un expediente
+  const canEdit = (expediente: Expediente) => {
+    if (!user.value) return false
+
+    // Solo el creador puede editar y solo si está en borrador o rechazado
+    return (
+      expediente.createdBy === user.value.id &&
+      (expediente.status === 'draft' || expediente.status === 'rejected')
+    )
+  }
+
+  // Verificar si puede enviar para aprobación
+  const canSubmit = (expediente: Expediente) => {
+    if (!user.value) return false
+
+    // Solo el creador puede enviar y debe estar en borrador O rechazado
+    return (
+      expediente.createdBy === user.value.id &&
+      (expediente.status === 'draft' || expediente.status === 'rejected')
+    )
+  }
+
+  // Verificar si puede aprobar
+  const canApprove = (expediente: any) => {
+    console.log('=== DEBUG canApprove ===')
+    console.log('User:', user.value?.email, user.value?.role)
+    console.log('User Department:', user.value?.departmentId)
+    console.log('Expediente Status:', expediente.status)
+    console.log('Expediente Level:', expediente.currentLevel)
+    console.log('Expediente Department:', expediente.departmentId)
+    console.log('Is Presidente Audiencia:', isPresidenteAudiencia.value)
+    console.log('Is Secretario General:', isSecretarioGeneral.value)
+
+    if (!user.value) {
+      console.log('No puede aprobar: usuario no autenticado')
+      return false
     }
 
-    const setSearchFilter = (search: string) => {
-        expedientesStore.setFilters({ search, page: 1 })
-        expedientesStore.fetchExpedientes()
+    // Verificar que el expediente esté pendiente de aprobación
+    if (expediente.status !== 'pending_approval') {
+      console.log('No puede aprobar: expediente no está pending_approval')
+      return false
     }
 
-    const setPage = (page: number) => {
-        expedientesStore.setFilters({ page })
-        expedientesStore.fetchExpedientes()
-    }
+    // NUEVO FLUJO DE APROBACIÓN ESTRICTO:
+    // El nivel indica QUIÉN debe aprobar, no de dónde viene
 
-    const refreshExpedientes = () => {
-        expedientesStore.fetchExpedientes()
-    }
-
-    // Verificar si puede editar un expediente
-    const canEdit = (expediente: Expediente) => {
-        if (!user.value) return false
-
-        // Solo el creador puede editar y solo si está en borrador o rechazado
-        return (
-            expediente.createdBy === user.value.id &&
-            (expediente.status === 'draft' || expediente.status === 'rejected')
-        )
-    }
-
-    // Verificar si puede enviar para aprobación
-    const canSubmit = (expediente: Expediente) => {
-        if (!user.value) return false
-
-        // Solo el creador puede enviar y debe estar en borrador O rechazado
-        return (
-            expediente.createdBy === user.value.id &&
-            (expediente.status === 'draft' || expediente.status === 'rejected')
-        )
-    }
-
-    // Verificar si puede aprobar
-    const canApprove = (expediente: any) => {
-        console.log('=== DEBUG canApprove ===')
-        console.log('User:', user.value?.email, user.value?.role)
-        console.log('User Department:', user.value?.departmentId)
-        console.log('Expediente Status:', expediente.status)
-        console.log('Expediente Level:', expediente.currentLevel)
-        console.log('Expediente Department:', expediente.departmentId)
-        console.log('Is Presidente Audiencia:', isPresidenteAudiencia.value)
-        console.log('Is Secretario General:', isSecretarioGeneral.value)
-
-        if (!user.value) {
-            console.log('No puede aprobar: usuario no autenticado')
-            return false
+    // CASO 1: Si el nivel es "presidente_audiencia", SOLO el presidente de audiencia puede aprobar
+    if (expediente.currentLevel === 'presidente_audiencia' && isPresidenteAudiencia.value) {
+      // Verificar que sea del mismo departamento
+      if (expediente.departmentId === user.value.departmentId) {
+        // Verificar que no sea el creador
+        if (expediente.createdBy !== user.value.id) {
+          console.log('✅ Presidente puede aprobar: nivel presidente_audiencia')
+          return true
+        } else {
+          console.log('❌ Presidente no puede aprobar: es el creador')
+          return false
         }
-
-        // Verificar que el expediente esté pendiente de aprobación
-        if (expediente.status !== 'pending_approval') {
-            console.log('No puede aprobar: expediente no está pending_approval')
-            return false
-        }
-
-        // NUEVO FLUJO DE APROBACIÓN ESTRICTO:
-        // El nivel indica QUIÉN debe aprobar, no de dónde viene
-
-        // CASO 1: Si el nivel es "presidente_audiencia", SOLO el presidente de audiencia puede aprobar
-        if (expediente.currentLevel === 'presidente_audiencia' && isPresidenteAudiencia.value) {
-            // Verificar que sea del mismo departamento
-            if (expediente.departmentId === user.value.departmentId) {
-                // Verificar que no sea el creador
-                if (expediente.createdBy !== user.value.id) {
-                    console.log('✅ Presidente puede aprobar: nivel presidente_audiencia')
-                    return true
-                } else {
-                    console.log('❌ Presidente no puede aprobar: es el creador')
-                    return false
-                }
-            } else {
-                console.log('❌ Presidente no puede aprobar: diferente departamento')
-                return false
-            }
-        }
-
-        // CASO 2: Si el nivel es "secretario_general", SOLO el secretario general puede aprobar
-        if (expediente.currentLevel === 'secretario_general' && isSecretarioGeneral.value) {
-            console.log('✅ Secretario puede aprobar: nivel secretario_general')
-            return true
-        }
-
-        // CASO 3: Admin puede aprobar cualquier expediente pendiente
-        if (user.value.role === 'admin') {
-            console.log('✅ Admin puede aprobar cualquier expediente')
-            return true
-        }
-
-        // No cumple ninguna condición
-        console.log('❌ No puede aprobar')
-        console.log('Resumen:')
-        console.log('- Nivel actual:', expediente.currentLevel)
-        console.log('- Tu rol:', user.value.role)
-        console.log('- Solo puede aprobar:', expediente.currentLevel === 'presidente_audiencia' ? 'Presidente de Audiencia' : 'Secretario General')
-
+      } else {
+        console.log('❌ Presidente no puede aprobar: diferente departamento')
         return false
+      }
     }
 
-    // Verificar si puede rechazar
-    const canReject = (expediente: any) => {
-        // Mismas reglas que aprobar
-        return canApprove(expediente)
+    // CASO 2: Si el nivel es "secretario_general", SOLO el secretario general puede aprobar
+    if (expediente.currentLevel === 'secretario_general' && isSecretarioGeneral.value) {
+      console.log('✅ Secretario puede aprobar: nivel secretario_general')
+      return true
     }
 
-    // Obtener badge de estado
-    const getStatusBadge = (status: ExpedienteStatus) => {
-        const badges = {
-            draft: { severity: 'secondary', label: 'Borrador', icon: 'pi-pencil' },
-            pending_approval: { severity: 'warning', label: 'Pendiente', icon: 'pi-clock' },
-            approved: { severity: 'success', label: 'Aprobado', icon: 'pi-check' },
-            rejected: { severity: 'danger', label: 'Rechazado', icon: 'pi-times' }
-        }
-
-        return badges[status] || badges.draft
+    // CASO 3: Admin puede aprobar cualquier expediente pendiente
+    if (user.value.role === 'admin') {
+      console.log('✅ Admin puede aprobar cualquier expediente')
+      return true
     }
 
-    // Obtener texto del nivel actual
-    const getCurrentLevelText = (level: string) => {
-        const levels: Record<string, string> = {
-            juez: 'Juez',
-            presidente_audiencia: 'Presidente de Audiencia',
-            secretario_general: 'Secretario General'
-        }
+    // No cumple ninguna condición
+    console.log('❌ No puede aprobar')
+    console.log('Resumen:')
+    console.log('- Nivel actual:', expediente.currentLevel)
+    console.log('- Tu rol:', user.value.role)
+    console.log(
+      '- Solo puede aprobar:',
+      expediente.currentLevel === 'presidente_audiencia'
+        ? 'Presidente de Audiencia'
+        : 'Secretario General',
+    )
 
-        return levels[level] || level
+    return false
+  }
+
+  // Verificar si puede rechazar
+  const canReject = (expediente: any) => {
+    // Mismas reglas que aprobar
+    return canApprove(expediente)
+  }
+
+  // Obtener badge de estado
+  const getStatusBadge = (status: ExpedienteStatus) => {
+    const badges = {
+      draft: { severity: 'secondary', label: 'Borrador', icon: 'pi-pencil' },
+      pending_approval: { severity: 'warning', label: 'Pendiente', icon: 'pi-clock' },
+      approved: { severity: 'success', label: 'Aprobado', icon: 'pi-check' },
+      rejected: { severity: 'danger', label: 'Rechazado', icon: 'pi-times' },
     }
 
-    return {
-        // Estado del store
-        expedientes: computed(() => expedientesStore.expedientes),
-        filteredExpedientes, // Expedientes filtrados por rol
-        loading: computed(() => expedientesStore.loading),
-        error: computed(() => expedientesStore.error),
-        pagination: computed(() => expedientesStore.pagination),
-        filters: computed(() => expedientesStore.filters),
+    return badges[status] || badges.draft
+  }
 
-        // Estadísticas usando expedientes filtrados
-        totalExpedientes: computed(() => filteredExpedientes.value.length),
-        expedientesPendientes: computed(() =>
-            filteredExpedientes.value.filter(e => e.status === 'pending_approval')
-        ),
-        expedientesAprobados: computed(() =>
-            filteredExpedientes.value.filter(e => e.status === 'approved')
-        ),
-        expedientesRechazados: computed(() =>
-            filteredExpedientes.value.filter(e => e.status === 'rejected')
-        ),
-        expedientesBorrador: computed(() =>
-            filteredExpedientes.value.filter(e => e.status === 'draft')
-        ),
-
-        // Métodos
-        setStatusFilter,
-        setSearchFilter,
-        setPage,
-        refreshExpedientes,
-        canEdit,
-        canSubmit,
-        canApprove,
-        canReject,
-        getStatusBadge,
-        getCurrentLevelText,
-
-        // Acciones del store
-        createExpediente: expedientesStore.createExpediente,
-        updateExpediente: expedientesStore.updateExpediente,
-        submitExpediente: expedientesStore.submitExpediente,
-        approveExpediente: expedientesStore.approveExpediente,
-        rejectExpediente: expedientesStore.rejectExpediente,
-        fetchExpedienteById: expedientesStore.fetchExpedienteById
+  // Obtener texto del nivel actual
+  const getCurrentLevelText = (level: string) => {
+    const levels: Record<string, string> = {
+      juez: 'Juez',
+      presidente_audiencia: 'Presidente de Audiencia',
+      secretario_general: 'Secretario General',
     }
+
+    return levels[level] || level
+  }
+
+  return {
+    // Estado del store
+    expedientes: computed(() => expedientesStore.expedientes),
+    filteredExpedientes, // Expedientes filtrados por rol
+    loading: computed(() => expedientesStore.loading),
+    error: computed(() => expedientesStore.error),
+    pagination: computed(() => expedientesStore.pagination),
+    filters: computed(() => expedientesStore.filters),
+
+    // Estadísticas usando expedientes filtrados
+    totalExpedientes: computed(() => filteredExpedientes.value.length),
+    expedientesPendientes: computed(() =>
+      filteredExpedientes.value.filter((e) => e.status === 'pending_approval'),
+    ),
+    expedientesAprobados: computed(() =>
+      filteredExpedientes.value.filter((e) => e.status === 'approved'),
+    ),
+    expedientesRechazados: computed(() =>
+      filteredExpedientes.value.filter((e) => e.status === 'rejected'),
+    ),
+    expedientesBorrador: computed(() =>
+      filteredExpedientes.value.filter((e) => e.status === 'draft'),
+    ),
+
+    // Métodos
+    setStatusFilter,
+    setSearchFilter,
+    setPage,
+    refreshExpedientes,
+    canEdit,
+    canSubmit,
+    canApprove,
+    canReject,
+    getStatusBadge,
+    getCurrentLevelText,
+
+    // Acciones del store
+    createExpediente: expedientesStore.createExpediente,
+    updateExpediente: expedientesStore.updateExpediente,
+    submitExpediente: expedientesStore.submitExpediente,
+    approveExpediente: expedientesStore.approveExpediente,
+    rejectExpediente: expedientesStore.rejectExpediente,
+    fetchExpedienteById: expedientesStore.fetchExpedienteById,
+  }
 }
