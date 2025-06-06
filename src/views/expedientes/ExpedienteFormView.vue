@@ -194,7 +194,20 @@ const getErrorMessage = (field: string) => {
     <!-- Header -->
     <div class="mb-6">
       <div class="flex items-center gap-2 text-gray-600 mb-2">
-        <i class="pi pi-arrow-left cursor-pointer" @click="handleCancel"></i>
+        <Button
+          icon="pi pi-home"
+          severity="secondary"
+          text
+          @click="router.push('/dashboard')"
+          v-tooltip.top="'Volver al Dashboard'"
+        />
+        <i class="pi pi-chevron-right text-sm"></i>
+        <Button
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          text
+          @click="handleCancel"
+        />
         <span>Volver a expedientes</span>
       </div>
       <h1 class="text-3xl font-bold text-gray-900">

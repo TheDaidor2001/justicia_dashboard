@@ -461,18 +461,37 @@ onUnmounted(() => {
     <!-- Header -->
     <div class="mb-6">
       <div class="flex items-center gap-2 text-gray-600 mb-2">
-        <i class="pi pi-arrow-left cursor-pointer" @click="handleCancel"></i>
+        <Button
+          icon="pi pi-home"
+          severity="secondary"
+          text
+          @click="router.push('/dashboard')"
+          v-tooltip.top="'Volver al Dashboard'"
+        />
+        <i class="pi pi-chevron-right text-sm"></i>
+        <Button
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          text
+          @click="handleCancel"
+        />
         <span>Volver a noticias</span>
       </div>
       <h1 class="text-3xl font-bold text-gray-900">
-        {{ isEditMode ? 'Editar Noticia' : 'Nueva Noticia' }}
+        <template v-if="isEditMode">
+          {{ isCourtSubmission ? 'Editar Aviso/Comunicado' : 'Editar Noticia' }}
+        </template>
+        <template v-else>
+          {{ isCourtSubmission ? 'Nuevo Aviso/Comunicado' : 'Nueva Noticia' }}
+        </template>
       </h1>
       <p class="text-gray-600 mt-2">
-        {{
-          isEditMode
-            ? 'Modifica los datos de la noticia'
-            : 'Completa el formulario para crear una nueva publicación'
-        }}
+        <template v-if="isEditMode">
+          {{ isCourtSubmission ? 'Modifica los datos del aviso o comunicado' : 'Modifica los datos de la noticia' }}
+        </template>
+        <template v-else>
+          {{ isCourtSubmission ? 'Completa el formulario para crear un nuevo aviso o comunicado que será enviado al Director de Prensa para su revisión' : 'Completa el formulario para crear una nueva publicación' }}
+        </template>
       </p>
     </div>
 

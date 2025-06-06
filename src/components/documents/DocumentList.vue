@@ -38,7 +38,6 @@ const loadDocuments = async () => {
   try {
     const response = await documentsService.getDocumentsByExpediente(props.expedienteId)
     if (response.success) {
-      console.log('Documentos cargados:', response.data) // Debug temporal
       documents.value = response.data
     }
   } catch (error) {
@@ -84,8 +83,6 @@ const downloadDocument = async (document: Document) => {
 
     if (response.success && response.data?.url) {
       // NO modificar la URL, usarla tal como viene del backend
-      console.log('URL de descarga:', response.data.url)
-
       // Abrir en nueva pestaña
       window.open(response.data.url, '_blank')
 

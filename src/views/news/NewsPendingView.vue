@@ -213,6 +213,19 @@ const formatDate = (date: string) => {
 
     <!-- Header -->
     <div class="mb-6">
+      <!-- Navegación -->
+      <div class="flex items-center gap-2 text-gray-600 mb-4">
+        <Button
+          icon="pi pi-home"
+          severity="secondary"
+          text
+          @click="$router.push('/dashboard')"
+          v-tooltip.top="'Volver al Dashboard'"
+        />
+        <i class="pi pi-chevron-right text-sm"></i>
+        <span>Noticias Pendientes</span>
+      </div>
+      
       <h1 class="text-3xl font-bold text-gray-900">{{ pageTitle }}</h1>
       <p class="text-gray-600 mt-2">{{ pageDescription }}</p>
     </div>

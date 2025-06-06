@@ -278,13 +278,11 @@ export const useNews = () => {
 
     // Protección contra clicks repetidos
     if (now - lastRefreshTime < MIN_REFRESH_INTERVAL) {
-      console.debug('refreshNews: Bloqueando refresh muy frecuente')
       return
     }
 
     // Verificar que no se esté cargando ya
     if (newsStore.loading) {
-      console.debug('refreshNews: Ya está cargando, ignorando')
       return
     }
 

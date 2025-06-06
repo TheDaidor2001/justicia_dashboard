@@ -51,13 +51,11 @@ const loadPendingApprovalCount = async () => {
 
   // Evitar cargas demasiado frecuentes
   if (now - lastLoadTime < MIN_LOAD_INTERVAL) {
-    console.debug('loadPendingApprovalCount: Rate limit, usando caché')
     return
   }
 
   // Evitar cargas múltiples simultáneas
   if (loadingPendingApproval.value) {
-    console.debug('loadPendingApprovalCount: Ya está cargando')
     return
   }
 

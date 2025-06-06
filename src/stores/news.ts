@@ -143,14 +143,11 @@ export const useNewsStore = defineStore('news', () => {
     if (!forceRefresh) {
       // Evitar múltiples cargas simultáneas
       if (loading.value) {
-        console.debug('fetchNews: Ya hay una carga en progreso')
         return { success: false, message: 'Ya hay una carga en progreso' }
       }
 
       // Rate limiting para evitar loops
       if (now - lastFetchTime < MIN_FETCH_INTERVAL) {
-        const waitTime = MIN_FETCH_INTERVAL - (now - lastFetchTime)
-        console.debug(`fetchNews: Rate limit, esperando ${waitTime}ms`)
         return { success: false, message: 'Demasiadas peticiones frecuentes' }
       }
     }
@@ -185,14 +182,12 @@ export const useNewsStore = defineStore('news', () => {
 
       // Si es error de rate limit del servicio, no mostrar como error
       if (err.name === 'ServiceRateLimitError' || err.name === 'RateLimitError') {
-        console.debug('fetchNews: Rate limit en servicio')
         return { success: false, message: '', rateLimited: true }
       }
 
       // Si es error 429, mostrar mensaje más amigable
       if (err.response?.status === 429 || err.name === 'RateLimitExceededError') {
         error.value = 'Servidor sobrecargado. Espera un momento e intenta de nuevo.'
-        console.warn('fetchNews: Error 429 del servidor')
       } else {
         error.value = err.message || 'Error al cargar noticias'
       }
@@ -422,7 +417,6 @@ export const useNewsStore = defineStore('news', () => {
 
     // Rate limiting para estadísticas
     if (now - lastStatsTime < MIN_STATS_INTERVAL) {
-      console.debug('fetchStatistics: Rate limit, usando caché')
       return { success: true, cached: true }
     }
 

@@ -135,35 +135,14 @@ export const newsService = {
   },
 
   async approveAsDirector(id: string, dto?: ApproveNewsDto): Promise<ApiResponse<void>> {
-    // Debug logging
-    console.log('=== APPROVE AS DIRECTOR DEBUG ===')
-    console.log('News ID:', id)
-    console.log('DTO:', dto)
-    console.log('Endpoint:', API_ENDPOINTS.NEWS_APPROVE_DIRECTOR(id))
-
-    // Verificar token actual
-    const token = localStorage.getItem('access_token')
-    console.log('Token present:', !!token)
-    console.log('Token preview:', token?.substring(0, 20) + '...')
-
-    // Verificar usuario actual
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
-    console.log('Current user:', user)
-    console.log('User role:', user.role)
-
     try {
       const { data } = await axiosInstance.post<ApiResponse<void>>(
         API_ENDPOINTS.NEWS_APPROVE_DIRECTOR(id),
         dto || {},
       )
-      console.log('Response success:', data)
       return data
     } catch (error: any) {
-      console.error('=== APPROVAL ERROR ===')
-      console.error('Error status:', error.response?.status)
-      console.error('Error data:', error.response?.data)
-      console.error('Error headers:', error.response?.headers)
-      console.error('Full error:', error)
+      console.error('Error approving news as director:', error.response?.data || error.message)
       throw error
     }
   },

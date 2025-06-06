@@ -80,13 +80,27 @@ const searchTerm = ref('')
 const selectedType = ref<NewsType | null>(null)
 const selectedStatus = ref<NewsStatus | null>(null)
 
-// Opciones de filtros
-const typeOptions = [
-  { label: 'Todos', value: null },
-  { label: 'Noticia', value: NewsType.NOTICIA },
-  { label: 'Aviso', value: NewsType.AVISO },
-  { label: 'Comunicado', value: NewsType.COMUNICADO },
-]
+// Opciones de filtros (ajustadas según el rol)
+const typeOptions = computed(() => {
+  const baseOptions = [{ label: 'Todos', value: null }]
+  
+  // Para jueces y presidentes de audiencia, solo avisos y comunicados
+  if (isJuez.value || isPresidenteAudiencia.value) {
+    return [
+      ...baseOptions,
+      { label: 'Aviso', value: NewsType.AVISO },
+      { label: 'Comunicado', value: NewsType.COMUNICADO },
+    ]
+  }
+  
+  // Para otros roles, todos los tipos
+  return [
+    ...baseOptions,
+    { label: 'Noticia', value: NewsType.NOTICIA },
+    { label: 'Aviso', value: NewsType.AVISO },
+    { label: 'Comunicado', value: NewsType.COMUNICADO },
+  ]
+})
 
 const statusOptions = [
   { label: 'Todos', value: null },
@@ -237,6 +251,19 @@ const hasImage = (news: News) => {
 
     <!-- Header -->
     <div class="mb-6">
+      <!-- Navegación -->
+      <div class="flex items-center gap-2 text-gray-600 mb-4">
+        <Button
+          icon="pi pi-home"
+          severity="secondary"
+          text
+          @click="router.push('/dashboard')"
+          v-tooltip.top="'Volver al Dashboard'"
+        />
+        <i class="pi pi-chevron-right text-sm"></i>
+        <span>Noticias</span>
+      </div>
+      
       <h1 class="text-3xl font-bold text-gray-900">
         <template v-if="isTecnicoPrensa">Mis Noticias</template>
         <template v-else-if="isDirectorPrensa">Mis Noticias y Aprobaciones</template>
@@ -344,11 +371,11 @@ const hasImage = (news: News) => {
                 v-tooltip.top="'Actualizar lista'"
               />
 
-              <!-- Botón envío desde juzgado -->
+              <!-- Botón crear aviso/comunicado para juzgados -->
               <Button
                 v-if="canSubmitFromCourt"
-                label="Enviar desde Juzgado"
-                icon="pi pi-building"
+                :label="isJuez || isPresidenteAudiencia ? 'Nuevo Aviso/Comunicado' : 'Enviar desde Juzgado'"
+                icon="pi pi-plus"
                 severity="info"
                 @click="navigateToCourtSubmission"
               />
@@ -559,12 +586,11 @@ const hasImage = (news: News) => {
                 label="Crear Primera Noticia"
                 icon="pi pi-plus"
                 @click="navigateToCreate"
-                severity="secondary"
               />
               <Button
-                v-else-if="canSubmitFromCourt"
-                label="Enviar Primer Aviso"
-                icon="pi pi-building"
+                v-if="canSubmitFromCourt && !canCreateNews"
+                :label="isJuez || isPresidenteAudiencia ? 'Crear Primer Aviso/Comunicado' : 'Enviar desde Juzgado'"
+                icon="pi pi-plus"
                 @click="navigateToCourtSubmission"
                 severity="info"
               />

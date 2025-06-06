@@ -9,7 +9,6 @@ import { newsService } from '@/services/news.service'
 import NewsActionButtons from '@/components/news/NewsActionButtons.vue'
 import NewsApprovalTimeline from '@/components/news/NewsApprovalTimeline.vue'
 import ApprovalDialog from '@/components/shared/ApprovalDialog.vue'
-import ApprovalDebugger from '@/components/debug/ApprovalDebugger.vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -69,7 +68,6 @@ const newsId = computed(() => route.params.id as string)
 // Cargar noticia
 const loadNews = async () => {
   if (isLoadingNews.value) {
-    console.debug('Ya se está cargando la noticia, ignorando llamada duplicada')
     return
   }
 
@@ -107,7 +105,6 @@ const loadNews = async () => {
 // Cargar historial de aprobación
 const loadApprovalHistory = async () => {
   if (loadingHistory.value) {
-    console.debug('Ya se está cargando el historial, ignorando llamada duplicada')
     return
   }
 
@@ -129,7 +126,6 @@ const loadApprovalHistory = async () => {
     if (isServerError) {
       console.info('Historial de aprobación no disponible, usando historial básico')
       const basicHistory = generateBasicHistory()
-      console.debug('Historial básico generado:', basicHistory)
       approvalHistory.value = basicHistory
     } else {
       // Para otros errores, loggear y mostrar notificación
@@ -394,7 +390,20 @@ const formatDate = (date: string) => {
       <!-- Header -->
       <div class="mb-6">
         <div class="flex items-center gap-2 text-gray-600 mb-4">
-          <i class="pi pi-arrow-left cursor-pointer" @click="router.push('/noticias')"></i>
+          <Button
+            icon="pi pi-home"
+            severity="secondary"
+            text
+            @click="router.push('/dashboard')"
+            v-tooltip.top="'Volver al Dashboard'"
+          />
+          <i class="pi pi-chevron-right text-sm"></i>
+          <Button
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            text
+            @click="router.push('/noticias')"
+          />
           <span>Volver a noticias</span>
         </div>
 
@@ -578,8 +587,6 @@ const formatDate = (date: string) => {
                   </template>
                 </Card>
 
-                <!-- Debug Component (temporal) -->
-                <ApprovalDebugger v-if="userRole === 'director_prensa'" :news="news" />
               </div>
             </div>
           </TabPanel>

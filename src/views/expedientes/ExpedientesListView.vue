@@ -113,6 +113,19 @@ const onPageChange = (event: any) => {
   <div class="p-6">
     <!-- Header -->
     <div class="mb-6">
+      <!-- Navegación -->
+      <div class="flex items-center gap-2 text-gray-600 mb-4">
+        <Button
+          icon="pi pi-home"
+          severity="secondary"
+          text
+          @click="router.push('/dashboard')"
+          v-tooltip.top="'Volver al Dashboard'"
+        />
+        <i class="pi pi-chevron-right text-sm"></i>
+        <span>Expedientes</span>
+      </div>
+      
       <h1 class="text-3xl font-bold text-gray-900">
         <template v-if="isJuez">Mis Expedientes</template>
         <template v-else-if="isPresidenteAudiencia">Expedientes para Aprobación</template>

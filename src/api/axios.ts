@@ -49,7 +49,6 @@ axiosInstance.interceptors.request.use(
 
     // Si hay más de 5 peticiones en 10 segundos, bloquear
     if (recentTimes.length >= 5) {
-      console.warn(`Rate limit exceeded for ${rateLimitKey}. Blocking request.`)
       const error = new Error('Too many requests. Please wait a moment.')
       error.name = 'RateLimitError'
       return Promise.reject(error)
@@ -78,7 +77,6 @@ axiosInstance.interceptors.request.use(
 
     // Para peticiones GET, verificar si ya está en progreso
     if (config.method === 'get' && activeRequests.has(requestKey)) {
-      console.debug(`Blocking duplicate GET request: ${requestKey}`)
       const error = new Error('Duplicate request blocked')
       error.name = 'DuplicateRequestError'
       return Promise.reject(error)
@@ -97,7 +95,6 @@ axiosInstance.interceptors.request.use(
       const criticalKey = `${config.method}_${config.url}_${formDataKey}`
 
       if (activeRequests.has(criticalKey)) {
-        console.warn(`Blocking duplicate critical request: ${criticalKey}`)
         const error = new Error('Operation already in progress')
         error.name = 'DuplicateOperationError'
         return Promise.reject(error)
@@ -172,7 +169,6 @@ axiosInstance.interceptors.response.use(
         originalRequest._retryCount++
         // Esperar más tiempo para 429: 3 segundos, luego 6 segundos
         const delay = originalRequest._retryCount * 3000
-        console.warn(`Rate limit hit, waiting ${delay}ms before retry`)
         await new Promise((resolve) => setTimeout(resolve, delay))
         return axiosInstance(originalRequest)
       } else {
