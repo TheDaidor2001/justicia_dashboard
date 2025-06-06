@@ -9,6 +9,7 @@ import { newsService } from '@/services/news.service'
 import NewsActionButtons from '@/components/news/NewsActionButtons.vue'
 import NewsApprovalTimeline from '@/components/news/NewsApprovalTimeline.vue'
 import ApprovalDialog from '@/components/shared/ApprovalDialog.vue'
+import ApprovalDebugger from '@/components/debug/ApprovalDebugger.vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -34,7 +35,7 @@ const route = useRoute()
 const toast = useToast()
 const confirm = useConfirm()
 
-const { userRole } = useAuth()
+const { user, userRole } = useAuth()
 const {
   loading,
   fetchNewsById,
@@ -71,7 +72,7 @@ const loadNews = async () => {
     console.debug('Ya se está cargando la noticia, ignorando llamada duplicada')
     return
   }
-  
+
   isLoadingNews.value = true
   try {
     const result = await fetchNewsById(newsId.value)
@@ -109,7 +110,7 @@ const loadApprovalHistory = async () => {
     console.debug('Ya se está cargando el historial, ignorando llamada duplicada')
     return
   }
-  
+
   loadingHistory.value = true
   try {
     const historyResult = await newsService.getApprovalHistory(newsId.value)
@@ -120,10 +121,11 @@ const loadApprovalHistory = async () => {
     }
   } catch (error: any) {
     // Verificar si es un error 500 (endpoint no implementado)
-    const isServerError = error?.response?.status === 500 || 
-                         error?.status === 500 || 
-                         (error?.message && error.message.includes('500'))
-    
+    const isServerError =
+      error?.response?.status === 500 ||
+      error?.status === 500 ||
+      (error?.message && error.message.includes('500'))
+
     if (isServerError) {
       console.info('Historial de aprobación no disponible, usando historial básico')
       const basicHistory = generateBasicHistory()
@@ -187,16 +189,19 @@ const generateBasicHistory = (): NewsApprovalHistory[] => {
 }
 
 // Watch for route changes to reset state
-watch(() => route.params.id, (newId, oldId) => {
-  if (newId !== oldId) {
-    // Reset state when navigating to a different news item
-    hasLoadedHistory.value = false
-    isLoadingNews.value = false
-    news.value = null
-    approvalHistory.value = []
-    loadNews()
-  }
-})
+watch(
+  () => route.params.id,
+  (newId, oldId) => {
+    if (newId !== oldId) {
+      // Reset state when navigating to a different news item
+      hasLoadedHistory.value = false
+      isLoadingNews.value = false
+      news.value = null
+      approvalHistory.value = []
+      loadNews()
+    }
+  },
+)
 
 onMounted(() => {
   loadNews()
@@ -221,7 +226,6 @@ const handleSubmitToDirector = async () => {
         life: 3000,
       })
       hasLoadedHistory.value = false
-      await loadNews()
     } else {
       toast.add({
         severity: 'error',
@@ -257,7 +261,7 @@ const handleDelete = () => {
     rejectLabel: 'Cancelar',
     accept: async () => {
       if (!news.value) return
-      
+
       const result = await deleteNews(news.value.id)
       if (result.success) {
         toast.add({
@@ -289,6 +293,8 @@ const confirmApprove = async (comments: string) => {
       result = await approveAsDirector(newsId.value, { comments })
     } else if (news.value?.status === NewsStatus.PENDING_PRESIDENT) {
       result = await approveAsPresident(newsId.value, { comments })
+    } else {
+      throw new Error(`Estado no válido para aprobación: ${news.value?.status}`)
     }
 
     if (result?.success) {
@@ -299,15 +305,32 @@ const confirmApprove = async (comments: string) => {
         life: 3000,
       })
       showApproveDialog.value = false
-      await loadNews()
     } else {
+      // Mostrar error más amigable para problemas del backend
+      let errorMessage = 'Error interno del servidor'
+
+      if (result?.message?.includes('Cannot access')) {
+        errorMessage = 'Error en el sistema de aprobación. Por favor contacta al administrador.'
+      } else if (result?.message?.includes('500')) {
+        errorMessage = 'Error interno del servidor. Intenta nuevamente en unos minutos.'
+      } else {
+        errorMessage = result?.message || 'Error desconocido al aprobar'
+      }
+
       toast.add({
         severity: 'error',
-        summary: 'Error',
-        detail: result?.message || 'Error al aprobar',
-        life: 3000,
+        summary: 'Error en aprobación',
+        detail: errorMessage,
+        life: 8000,
       })
     }
+  } catch (error: any) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error de conexión',
+      detail: 'No se pudo conectar con el servidor. Verifica tu conexión.',
+      life: 5000,
+    })
   } finally {
     processingAction.value = false
   }
@@ -326,7 +349,6 @@ const confirmReject = async (comments: string) => {
         life: 3000,
       })
       showRejectDialog.value = false
-      await loadNews()
     } else {
       toast.add({
         severity: 'error',
@@ -428,119 +450,139 @@ const formatDate = (date: string) => {
             <span>Historial de Aprobación</span>
           </Tab>
         </TabList>
-        
+
         <TabPanels>
           <!-- Tab Contenido -->
           <TabPanel value="0">
-          
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Columna principal -->
-            <div class="lg:col-span-2">
-              <!-- Imagen destacada -->
-              <div v-if="news.imageUrl" class="mb-6">
-                <Image
-                  :src="news.imageUrl"
-                  :alt="news.title"
-                  class="w-full rounded-lg shadow-lg"
-                  preview
-                />
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Columna principal -->
+              <div class="lg:col-span-2">
+                <!-- Imagen destacada -->
+                <div v-if="news.imageUrl" class="mb-6">
+                  <Image
+                    :src="news.imageUrl"
+                    :alt="news.title"
+                    class="w-full rounded-lg shadow-lg"
+                    preview
+                  />
+                </div>
+
+                <!-- Subtítulo -->
+                <Card v-if="news.subtitle" class="mb-6">
+                  <template #title>Subtítulo</template>
+                  <template #content>
+                    <p class="text-xl text-gray-600">{{ news.subtitle }}</p>
+                  </template>
+                </Card>
+
+                <!-- Contenido -->
+                <Card class="mb-6">
+                  <template #title>Contenido Principal</template>
+                  <template #content>
+                    <div
+                      class="prose prose-lg max-w-none"
+                      v-html="formatContent(news.content)"
+                    ></div>
+                  </template>
+                </Card>
+
+                <!-- Motivo de rechazo si existe -->
+                <Message
+                  v-if="news.status === NewsStatus.REJECTED && news.rejectionReason"
+                  severity="error"
+                  :closable="false"
+                  class="mb-6"
+                >
+                  <div>
+                    <strong>Motivo del rechazo:</strong>
+                    <p class="mt-2">{{ news.rejectionReason }}</p>
+                  </div>
+                </Message>
               </div>
 
-              <!-- Subtítulo -->
-              <Card v-if="news.subtitle" class="mb-6">
-                <template #title>Subtítulo</template>
-                <template #content>
-                  <p class="text-xl text-gray-600">{{ news.subtitle }}</p>
-                </template>
-              </Card>
+              <!-- Columna lateral - Información -->
+              <div class="space-y-6">
+                <!-- Información básica -->
+                <Card>
+                  <template #title>
+                    <div class="flex items-center gap-2">
+                      <i class="pi pi-info-circle text-xl"></i>
+                      <span>Información</span>
+                    </div>
+                  </template>
+                  <template #content>
+                    <div class="space-y-3">
+                      <div>
+                        <label class="text-sm text-gray-600">Autor</label>
+                        <div class="flex items-center gap-2 mt-1">
+                          <Avatar
+                            :label="
+                              (
+                                (news as any).author?.fullName ||
+                                news.creator?.fullName ||
+                                user?.fullName ||
+                                'U'
+                              )?.charAt(0)
+                            "
+                            shape="circle"
+                            size="small"
+                            class="bg-gray-200"
+                          />
+                          <span class="font-medium">
+                            {{
+                              (news as any).author?.fullName ||
+                              news.creator?.fullName ||
+                              'Autor desconocido'
+                            }}
+                          </span>
+                        </div>
+                      </div>
 
-              <!-- Contenido -->
-              <Card class="mb-6">
-                <template #title>Contenido Principal</template>
-                <template #content>
-                  <div class="prose prose-lg max-w-none" v-html="formatContent(news.content)"></div>
-                </template>
-              </Card>
+                      <div>
+                        <label class="text-sm text-gray-600">Departamento</label>
+                        <p class="font-medium">{{ news.department?.name || 'N/A' }}</p>
+                      </div>
 
-              <!-- Motivo de rechazo si existe -->
-              <Message
-                v-if="news.status === NewsStatus.REJECTED && news.rejectionReason"
-                severity="error"
-                :closable="false"
-                class="mb-6"
-              >
-                <div>
-                  <strong>Motivo del rechazo:</strong>
-                  <p class="mt-2">{{ news.rejectionReason }}</p>
-                </div>
-              </Message>
-            </div>
+                      <div>
+                        <label class="text-sm text-gray-600">Fecha de creación</label>
+                        <p class="font-medium">{{ formatDate(news.createdAt) }}</p>
+                      </div>
 
-            <!-- Columna lateral - Información -->
-            <div class="space-y-6">
-              <!-- Información básica -->
-              <Card>
-                <template #title>
-                  <div class="flex items-center gap-2">
-                    <i class="pi pi-info-circle text-xl"></i>
-                    <span>Información</span>
-                  </div>
-                </template>
-                <template #content>
-                  <div class="space-y-3">
-                    <div>
-                      <label class="text-sm text-gray-600">Autor</label>
-                      <div class="flex items-center gap-2 mt-1">
-                        <Avatar
-                          :label="news.creator?.fullName?.charAt(0)"
-                          shape="circle"
-                          size="small"
-                          class="bg-gray-200"
-                        />
-                        <span class="font-medium">{{ news.creator?.fullName || 'Autor desconocido' }}</span>
+                      <div>
+                        <label class="text-sm text-gray-600">Estado actual</label>
+                        <div class="mt-1">
+                          <Tag
+                            :value="getNewsStatusLabel(news.status)"
+                            :severity="getNewsStatusBadge(news.status).severity as any"
+                            :icon="'pi ' + getNewsStatusBadge(news.status).icon"
+                            class="text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="text-sm text-gray-600">Visualizaciones</label>
+                        <p class="font-medium">
+                          <i class="pi pi-eye mr-1"></i>
+                          {{ news.viewCount }} vistas
+                        </p>
+                      </div>
+
+                      <div v-if="news.publishedAt">
+                        <label class="text-sm text-gray-600">URL pública</label>
+                        <p class="font-mono text-xs text-blue-600 break-all">
+                          /noticias/{{ news.slug }}
+                        </p>
                       </div>
                     </div>
+                  </template>
+                </Card>
 
-                    <div>
-                      <label class="text-sm text-gray-600">Departamento</label>
-                      <p class="font-medium">{{ news.department?.name || 'N/A' }}</p>
-                    </div>
-
-                    <div>
-                      <label class="text-sm text-gray-600">Fecha de creación</label>
-                      <p class="font-medium">{{ formatDate(news.createdAt) }}</p>
-                    </div>
-
-                    <div>
-                      <label class="text-sm text-gray-600">Estado actual</label>
-                      <div class="mt-1">
-                        <Tag
-                          :value="getNewsStatusLabel(news.status)"
-                          :severity="getNewsStatusBadge(news.status).severity as any"
-                          :icon="'pi ' + getNewsStatusBadge(news.status).icon"
-                          class="text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label class="text-sm text-gray-600">Visualizaciones</label>
-                      <p class="font-medium">
-                        <i class="pi pi-eye mr-1"></i>
-                        {{ news.viewCount }} vistas
-                      </p>
-                    </div>
-
-                    <div v-if="news.publishedAt">
-                      <label class="text-sm text-gray-600">URL pública</label>
-                      <p class="font-mono text-xs text-blue-600 break-all">/noticias/{{ news.slug }}</p>
-                    </div>
-                  </div>
-                </template>
-              </Card>
+                <!-- Debug Component (temporal) -->
+                <ApprovalDebugger v-if="userRole === 'director_prensa'" :news="news" />
+              </div>
             </div>
-          </div>
-        </TabPanel>
+          </TabPanel>
 
           <!-- Tab Historial -->
           <TabPanel value="1">
@@ -679,5 +721,4 @@ const formatDate = (date: string) => {
     color: #6b7280;
   }
 }
-
 </style>

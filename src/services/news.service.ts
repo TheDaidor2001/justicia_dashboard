@@ -17,6 +17,28 @@ import type {
 } from '@/types/news'
 import type { ApiResponse } from '@/types/auth'
 
+// Cache para prevenir envíos duplicados
+const pendingRequests = new Map<string, Promise<any>>()
+
+// Rate limiting por endpoint
+const lastRequestTime = new Map<string, number>()
+const MIN_REQUEST_INTERVAL = 500 // 500ms mínimo entre peticiones al mismo endpoint
+
+// Función para verificar rate limit
+const checkRateLimit = (endpoint: string): void => {
+  const now = Date.now()
+  const lastTime = lastRequestTime.get(endpoint) || 0
+
+  if (now - lastTime < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - (now - lastTime)
+    const error = new Error(`Rate limit: wait ${waitTime}ms before next request to ${endpoint}`)
+    error.name = 'ServiceRateLimitError'
+    throw error
+  }
+
+  lastRequestTime.set(endpoint, now)
+}
+
 export const newsService = {
   // ===== ENDPOINTS PÚBLICOS =====
 
@@ -37,6 +59,9 @@ export const newsService = {
   // ===== ENDPOINTS AUTENTICADOS =====
 
   async getNews(filters?: NewsFilters): Promise<NewsResponse> {
+    const endpoint = 'getNews'
+    checkRateLimit(endpoint)
+
     const { data } = await axiosInstance.get<NewsResponse>(API_ENDPOINTS.NEWS, { params: filters })
     return data
   },
@@ -47,6 +72,14 @@ export const newsService = {
   },
 
   async createNews(dto: CreateNewsDto): Promise<ApiResponse<News>> {
+    // Crear clave única para esta operación
+    const requestKey = `create_${dto.title}_${dto.type}_${Date.now()}`
+
+    // Si ya hay una petición idéntica en progreso, devolverla
+    if (pendingRequests.has(requestKey)) {
+      return pendingRequests.get(requestKey)!
+    }
+
     const formData = new FormData()
     formData.append('title', dto.title)
     if (dto.subtitle) formData.append('subtitle', dto.subtitle)
@@ -54,8 +87,22 @@ export const newsService = {
     formData.append('type', dto.type)
     if (dto.image) formData.append('image', dto.image)
 
-    const { data } = await axiosInstance.post<ApiResponse<News>>(API_ENDPOINTS.NEWS, formData)
-    return data
+    // Crear y cachear la promesa
+    const requestPromise = axiosInstance
+      .post<ApiResponse<News>>(API_ENDPOINTS.NEWS, formData)
+      .then((response) => {
+        // Limpiar del cache cuando termine
+        pendingRequests.delete(requestKey)
+        return response.data
+      })
+      .catch((error) => {
+        // Limpiar del cache también en caso de error
+        pendingRequests.delete(requestKey)
+        throw error
+      })
+
+    pendingRequests.set(requestKey, requestPromise)
+    return requestPromise
   },
 
   async updateNews(id: string, dto: UpdateNewsDto): Promise<ApiResponse<News>> {
@@ -88,11 +135,37 @@ export const newsService = {
   },
 
   async approveAsDirector(id: string, dto?: ApproveNewsDto): Promise<ApiResponse<void>> {
-    const { data } = await axiosInstance.post<ApiResponse<void>>(
-      API_ENDPOINTS.NEWS_APPROVE_DIRECTOR(id),
-      dto || {},
-    )
-    return data
+    // Debug logging
+    console.log('=== APPROVE AS DIRECTOR DEBUG ===')
+    console.log('News ID:', id)
+    console.log('DTO:', dto)
+    console.log('Endpoint:', API_ENDPOINTS.NEWS_APPROVE_DIRECTOR(id))
+
+    // Verificar token actual
+    const token = localStorage.getItem('access_token')
+    console.log('Token present:', !!token)
+    console.log('Token preview:', token?.substring(0, 20) + '...')
+
+    // Verificar usuario actual
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    console.log('Current user:', user)
+    console.log('User role:', user.role)
+
+    try {
+      const { data } = await axiosInstance.post<ApiResponse<void>>(
+        API_ENDPOINTS.NEWS_APPROVE_DIRECTOR(id),
+        dto || {},
+      )
+      console.log('Response success:', data)
+      return data
+    } catch (error: any) {
+      console.error('=== APPROVAL ERROR ===')
+      console.error('Error status:', error.response?.status)
+      console.error('Error data:', error.response?.data)
+      console.error('Error headers:', error.response?.headers)
+      console.error('Full error:', error)
+      throw error
+    }
   },
 
   async approveAsPresident(id: string, dto?: ApproveNewsDto): Promise<ApiResponse<void>> {
@@ -111,22 +184,44 @@ export const newsService = {
   // ===== ENVÍO DESDE JUZGADOS =====
 
   async submitFromCourt(dto: CourtSubmissionDto): Promise<ApiResponse<News>> {
+    // Crear clave única para esta operación desde juzgado
+    const requestKey = `court_${dto.title}_${dto.type}_${Date.now()}`
+
+    // Si ya hay una petición idéntica en progreso, devolverla
+    if (pendingRequests.has(requestKey)) {
+      return pendingRequests.get(requestKey)!
+    }
+
     const formData = new FormData()
     formData.append('title', dto.title)
     formData.append('content', dto.content)
     formData.append('type', dto.type)
     if (dto.image) formData.append('image', dto.image)
 
-    const { data } = await axiosInstance.post<ApiResponse<News>>(
-      API_ENDPOINTS.NEWS_COURT_SUBMISSION,
-      formData,
-    )
-    return data
+    // Crear y cachear la promesa
+    const requestPromise = axiosInstance
+      .post<ApiResponse<News>>(API_ENDPOINTS.NEWS_COURT_SUBMISSION, formData)
+      .then((response) => {
+        // Limpiar del cache cuando termine
+        pendingRequests.delete(requestKey)
+        return response.data
+      })
+      .catch((error) => {
+        // Limpiar del cache también en caso de error
+        pendingRequests.delete(requestKey)
+        throw error
+      })
+
+    pendingRequests.set(requestKey, requestPromise)
+    return requestPromise
   },
 
   // ===== ESTADÍSTICAS =====
 
   async getStatistics(): Promise<ApiResponse<NewsStatistics>> {
+    const endpoint = 'getStatistics'
+    checkRateLimit(endpoint)
+
     const { data } = await axiosInstance.get<ApiResponse<NewsStatistics>>(API_ENDPOINTS.NEWS_STATS)
     return data
   },
@@ -137,6 +232,32 @@ export const newsService = {
     const { data } = await axiosInstance.get<ApiResponse<NewsApprovalHistory[]>>(
       API_ENDPOINTS.NEWS_HISTORY(id),
     )
+    return data
+  },
+
+  // ===== ENDPOINTS POR ROL =====
+
+  async getMyNews(filters?: NewsFilters): Promise<NewsResponse> {
+    const { data } = await axiosInstance.get<NewsResponse>(API_ENDPOINTS.NEWS_MY_NEWS, {
+      params: filters,
+    })
+    return data
+  },
+
+  async getNewsPendingApproval(filters?: NewsFilters): Promise<NewsResponse> {
+    const endpoint = 'getNewsPendingApproval'
+    checkRateLimit(endpoint)
+
+    const { data } = await axiosInstance.get<NewsResponse>(API_ENDPOINTS.NEWS_PENDING_APPROVAL, {
+      params: filters,
+    })
+    return data
+  },
+
+  async getNewsCreatedByMe(filters?: NewsFilters): Promise<NewsResponse> {
+    const { data } = await axiosInstance.get<NewsResponse>(API_ENDPOINTS.NEWS_CREATED_BY_ME, {
+      params: filters,
+    })
     return data
   },
 }

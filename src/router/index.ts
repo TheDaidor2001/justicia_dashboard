@@ -60,12 +60,39 @@ const router = createRouter({
       name: 'noticia-nueva',
       component: () => import('@/views/news/NewsFormView.vue'),
       meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo técnicos de prensa y admins pueden crear noticias
+        const allowedRoles = ['tecnico_prensa', 'admin']
+
+        if (allowedRoles.includes(authStore.user?.role || '')) {
+          next()
+        } else {
+          next('/noticias')
+        }
+      },
     },
     {
       path: '/noticias/enviar-juzgado',
       name: 'noticia-enviar-juzgado',
       component: () => import('@/views/news/NewsFormView.vue'),
       meta: { requiresAuth: true, courtSubmission: true },
+    },
+    {
+      path: '/noticias/pendientes',
+      name: 'noticias-pendientes',
+      component: () => import('@/views/news/NewsPendingView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        const allowedRoles = ['director_prensa', 'presidente_cspj', 'admin']
+
+        if (allowedRoles.includes(authStore.user?.role || '')) {
+          next()
+        } else {
+          next('/noticias')
+        }
+      },
     },
     {
       path: '/noticias/:id',

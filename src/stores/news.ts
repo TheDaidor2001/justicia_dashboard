@@ -39,6 +39,7 @@ export const useNewsStore = defineStore('news', () => {
     totalPages: 0,
   })
   const statistics = ref<NewsStatistics | null>(null)
+  const needsRefresh = ref(false) // Flag para indicar si se necesita recarga
 
   // Getters
   const totalNews = computed(() => pagination.value.total)
@@ -46,8 +47,8 @@ export const useNewsStore = defineStore('news', () => {
   const newsByStatus = computed(() => {
     const grouped: Record<NewsStatus, News[]> = {
       draft: [],
-      pending_director: [],
-      pending_president: [],
+      pending_director_approval: [],
+      pending_president_approval: [],
       published: [],
       rejected: [],
     }
@@ -80,7 +81,7 @@ export const useNewsStore = defineStore('news', () => {
   const draftNews = computed(() => newsList.value.filter((n) => n.status === 'draft'))
   const pendingNews = computed(() =>
     newsList.value.filter(
-      (n) => n.status === 'pending_director' || n.status === 'pending_president',
+      (n) => n.status === 'pending_director_approval' || n.status === 'pending_president_approval',
     ),
   )
   const publishedNews = computed(() => newsList.value.filter((n) => n.status === 'published'))
@@ -130,13 +131,43 @@ export const useNewsStore = defineStore('news', () => {
     }
   }
 
+  // Control para evitar loops de peticiones
+  let lastFetchTime = 0
+  const MIN_FETCH_INTERVAL = 1000 // 1 segundo mínimo entre fetchNews
+
   // Actions - Authenticated
-  const fetchNews = async (customFilters?: NewsFilters) => {
+  const fetchNews = async (customFilters?: NewsFilters, forceRefresh = false) => {
+    const now = Date.now()
+
+    // Si es forzado, saltar las verificaciones de rate limit
+    if (!forceRefresh) {
+      // Evitar múltiples cargas simultáneas
+      if (loading.value) {
+        console.debug('fetchNews: Ya hay una carga en progreso')
+        return { success: false, message: 'Ya hay una carga en progreso' }
+      }
+
+      // Rate limiting para evitar loops
+      if (now - lastFetchTime < MIN_FETCH_INTERVAL) {
+        const waitTime = MIN_FETCH_INTERVAL - (now - lastFetchTime)
+        console.debug(`fetchNews: Rate limit, esperando ${waitTime}ms`)
+        return { success: false, message: 'Demasiadas peticiones frecuentes' }
+      }
+    }
+
+    lastFetchTime = now
+
     loading.value = true
     error.value = null
 
     try {
       const finalFilters = { ...filters.value, ...customFilters }
+      
+      // Agregar timestamp para forzar recarga si es necesario
+      if (forceRefresh) {
+        finalFilters._t = now
+      }
+      
       const response = await newsService.getNews(finalFilters)
 
       if (response.success) {
@@ -147,7 +178,24 @@ export const useNewsStore = defineStore('news', () => {
 
       return { success: false, message: response.message || 'Error al cargar noticias' }
     } catch (err: any) {
-      error.value = err.message || 'Error al cargar noticias'
+      // Si es un error de cancelación de axios, no mostrar error
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') {
+        return { success: false, message: '', cancelled: true }
+      }
+
+      // Si es error de rate limit del servicio, no mostrar como error
+      if (err.name === 'ServiceRateLimitError' || err.name === 'RateLimitError') {
+        console.debug('fetchNews: Rate limit en servicio')
+        return { success: false, message: '', rateLimited: true }
+      }
+
+      // Si es error 429, mostrar mensaje más amigable
+      if (err.response?.status === 429 || err.name === 'RateLimitExceededError') {
+        error.value = 'Servidor sobrecargado. Espera un momento e intenta de nuevo.'
+        console.warn('fetchNews: Error 429 del servidor')
+      } else {
+        error.value = err.message || 'Error al cargar noticias'
+      }
       return { success: false, message: error.value }
     } finally {
       loading.value = false
@@ -183,8 +231,8 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.createNews(data)
 
       if (response.success && response.data) {
-        // Agregar la nueva noticia a la lista
-        newsList.value.unshift(response.data)
+        // Marcar que se necesita recarga en lugar de recargar inmediatamente
+        markNeedsRefresh()
         return { success: true, data: response.data }
       }
 
@@ -205,16 +253,13 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.updateNews(id, data)
 
       if (response.success && response.data) {
-        // Actualizar en la lista
-        const index = newsList.value.findIndex((n) => n.id === id)
-        if (index !== -1) {
-          newsList.value[index] = response.data
-        }
-
         // Actualizar la noticia actual si es la misma
         if (currentNews.value?.id === id) {
           currentNews.value = response.data
         }
+
+        // Marcar que se necesita recarga en lugar de recargar inmediatamente
+        markNeedsRefresh()
 
         return { success: true, data: response.data }
       }
@@ -236,13 +281,13 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.deleteNews(id)
 
       if (response.success) {
-        // Eliminar de la lista
-        newsList.value = newsList.value.filter((n) => n.id !== id)
-
         // Limpiar si es la noticia actual
         if (currentNews.value?.id === id) {
           currentNews.value = null
         }
+
+        // Marcar que se necesita recarga en lugar de recargar inmediatamente
+        markNeedsRefresh()
 
         return { success: true, message: 'Noticia eliminada correctamente' }
       }
@@ -265,7 +310,8 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.submitToDirector(id, data)
 
       if (response.success) {
-        await fetchNewsById(id)
+        // Marcar que se necesita recarga
+        markNeedsRefresh()
         return { success: true, message: 'Noticia enviada al director' }
       }
 
@@ -286,7 +332,8 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.approveAsDirector(id, data)
 
       if (response.success) {
-        await fetchNewsById(id)
+        // Marcar que se necesita recarga
+        markNeedsRefresh()
         return { success: true, message: 'Noticia aprobada por director' }
       }
 
@@ -307,7 +354,8 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.approveAsPresident(id, data)
 
       if (response.success) {
-        await fetchNewsById(id)
+        // Marcar que se necesita recarga
+        markNeedsRefresh()
         return { success: true, message: 'Noticia aprobada y publicada' }
       }
 
@@ -328,7 +376,8 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.rejectNews(id, data)
 
       if (response.success) {
-        await fetchNewsById(id)
+        // Marcar que se necesita recarga
+        markNeedsRefresh()
         return { success: true, message: 'Noticia rechazada' }
       }
 
@@ -349,6 +398,8 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.submitFromCourt(data)
 
       if (response.success && response.data) {
+        // Marcar que se necesita recarga
+        markNeedsRefresh()
         return { success: true, data: response.data }
       }
 
@@ -361,8 +412,22 @@ export const useNewsStore = defineStore('news', () => {
     }
   }
 
+  // Control para estadísticas
+  let lastStatsTime = 0
+  const MIN_STATS_INTERVAL = 5000 // 5 segundos mínimo entre estadísticas
+
   // Actions - Statistics
   const fetchStatistics = async () => {
+    const now = Date.now()
+
+    // Rate limiting para estadísticas
+    if (now - lastStatsTime < MIN_STATS_INTERVAL) {
+      console.debug('fetchStatistics: Rate limit, usando caché')
+      return { success: true, cached: true }
+    }
+
+    lastStatsTime = now
+
     try {
       const response = await newsService.getStatistics()
 
@@ -396,6 +461,95 @@ export const useNewsStore = defineStore('news', () => {
     currentNews.value = null
   }
 
+  // Funciones para el flag de recarga
+  const markNeedsRefresh = () => {
+    needsRefresh.value = true
+  }
+
+  const clearNeedsRefresh = () => {
+    needsRefresh.value = false
+  }
+
+  const checkAndRefreshIfNeeded = async () => {
+    if (needsRefresh.value) {
+      await fetchNews(undefined, true) // Forzar recarga
+      await fetchStatistics() // También actualizar estadísticas
+      needsRefresh.value = false
+      return true
+    }
+    return false
+  }
+
+  // Métodos especializados por rol
+  const fetchMyNews = async (customFilters?: NewsFilters) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const finalFilters = { ...filters.value, ...customFilters }
+      const response = await newsService.getMyNews(finalFilters)
+
+      if (response.success) {
+        newsList.value = response.data
+        pagination.value = response.pagination
+        return { success: true }
+      }
+
+      return { success: false, message: response.message || 'Error al cargar mis noticias' }
+    } catch (err: any) {
+      error.value = err.message || 'Error al cargar mis noticias'
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchNewsPendingApproval = async (customFilters?: NewsFilters) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const finalFilters = { ...filters.value, ...customFilters }
+      const response = await newsService.getNewsPendingApproval(finalFilters)
+
+      if (response.success) {
+        newsList.value = response.data
+        pagination.value = response.pagination
+        return { success: true }
+      }
+
+      return { success: false, message: response.message || 'Error al cargar noticias pendientes' }
+    } catch (err: any) {
+      error.value = err.message || 'Error al cargar noticias pendientes'
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchNewsCreatedByMe = async (customFilters?: NewsFilters) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const finalFilters = { ...filters.value, ...customFilters }
+      const response = await newsService.getNewsCreatedByMe(finalFilters)
+
+      if (response.success) {
+        newsList.value = response.data
+        pagination.value = response.pagination
+        return { success: true }
+      }
+
+      return { success: false, message: response.message || 'Error al cargar noticias creadas' }
+    } catch (err: any) {
+      error.value = err.message || 'Error al cargar noticias creadas'
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     // State
     newsList,
@@ -406,6 +560,7 @@ export const useNewsStore = defineStore('news', () => {
     filters,
     pagination,
     statistics,
+    needsRefresh,
 
     // Getters
     totalNews,
@@ -440,5 +595,13 @@ export const useNewsStore = defineStore('news', () => {
     setFilters,
     resetFilters,
     clearCurrentNews,
+    markNeedsRefresh,
+    clearNeedsRefresh,
+    checkAndRefreshIfNeeded,
+
+    // Role-based methods
+    fetchMyNews,
+    fetchNewsPendingApproval,
+    fetchNewsCreatedByMe,
   }
 })

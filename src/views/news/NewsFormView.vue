@@ -20,7 +20,15 @@ import { useToast } from 'primevue/usetoast'
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
-const { createNews, updateNews, fetchNewsById } = useNews()
+const {
+  createNews,
+  updateNews,
+  fetchNewsById,
+  getAllowedContentTypes,
+  canCreateNews,
+  canSubmitFromCourt,
+  submitFromCourt,
+} = useNews()
 
 // Estado del formulario
 const isEditMode = computed(() => !!route.params.id)
@@ -30,6 +38,7 @@ const loading = ref(false)
 const submitting = ref(false)
 const isDraft = ref(true)
 const autoSaveTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+const hasNavigated = ref(false) // Flag para prevenir navegación múltiple
 
 // Datos del formulario
 const formData = ref({
@@ -43,16 +52,63 @@ const formData = ref({
 const imageFile = ref<File | null>(null)
 const existingImageUrl = ref<string | null>(null)
 
-// Tipos de noticia disponibles
-const newsTypes = [
-  { value: NewsType.NOTICIA, label: 'Noticia', description: 'Requiere aprobación presidencial' },
-  { value: NewsType.AVISO, label: 'Aviso', description: 'Solo requiere aprobación del director' },
-  {
-    value: NewsType.COMUNICADO,
-    label: 'Comunicado',
-    description: 'Solo requiere aprobación del director',
-  },
-]
+// Tipos de noticia disponibles según el rol del usuario
+const newsTypes = computed(() => {
+  const allowedTypes = getAllowedContentTypes.value
+  const allTypes = [
+    {
+      value: NewsType.NOTICIA,
+      label: 'Noticia',
+      description: 'Requiere aprobación presidencial (3 niveles)',
+    },
+    {
+      value: NewsType.AVISO,
+      label: 'Aviso',
+      description: 'Solo requiere aprobación del director (2 niveles)',
+    },
+    {
+      value: NewsType.COMUNICADO,
+      label: 'Comunicado',
+      description: 'Solo requiere aprobación del director (2 niveles)',
+    },
+  ]
+
+  // Filtrar solo los tipos permitidos para el rol actual
+  return allTypes.filter((type) => allowedTypes.includes(type.value))
+})
+
+// Verificar permisos al montar
+onMounted(() => {
+  // Si es envío desde juzgado, verificar permisos específicos
+  if (isCourtSubmission.value && !canSubmitFromCourt.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Sin permisos',
+      detail: 'No tienes permisos para enviar contenido desde juzgados',
+      life: 3000,
+    })
+    router.push('/noticias')
+    return
+  }
+
+  // Si es creación normal, verificar permisos generales
+  if (!isEditMode.value && !isCourtSubmission.value && !canCreateNews.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Sin permisos',
+      detail: 'No tienes permisos para crear noticias',
+      life: 3000,
+    })
+    router.push('/noticias')
+    return
+  }
+
+  // Ajustar tipo por defecto según permisos
+  const allowedTypes = getAllowedContentTypes.value
+  if (allowedTypes.length > 0 && !allowedTypes.includes(formData.value.type)) {
+    formData.value.type = allowedTypes[0]
+  }
+})
 
 // Reglas de validación
 const rules = computed(() => ({
@@ -77,8 +133,38 @@ const rules = computed(() => ({
 
 const v$ = useVuelidate(rules, formData)
 
-// Cargar noticia si es modo edición
-onMounted(async () => {
+// Cargar noticia si es modo edición y verificar permisos
+const initializeComponent = async () => {
+  // Verificar permisos primero
+  if (isCourtSubmission.value && !canSubmitFromCourt.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Sin permisos',
+      detail: 'No tienes permisos para enviar contenido desde juzgados',
+      life: 3000,
+    })
+    router.push('/noticias')
+    return
+  }
+
+  if (!isEditMode.value && !isCourtSubmission.value && !canCreateNews.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Sin permisos',
+      detail: 'No tienes permisos para crear noticias',
+      life: 3000,
+    })
+    router.push('/noticias')
+    return
+  }
+
+  // Ajustar tipo por defecto según permisos
+  const allowedTypes = getAllowedContentTypes.value
+  if (allowedTypes.length > 0 && !allowedTypes.includes(formData.value.type)) {
+    formData.value.type = allowedTypes[0]
+  }
+
+  // Cargar noticia si es modo edición
   if (isEditMode.value) {
     loading.value = true
     try {
@@ -112,7 +198,9 @@ onMounted(async () => {
       loading.value = false
     }
   }
-})
+}
+
+onMounted(initializeComponent)
 
 // Manejar selección de imagen
 const onImageSelect = (file: File | null) => {
@@ -131,11 +219,16 @@ const onImageError = (message: string) => {
 
 // Auto-guardado como borrador
 const autoSaveDraft = async () => {
+  // No auto-guardar si ya se está enviando o navegando
+  if (submitting.value || hasNavigated.value) return
+  
   if (!formData.value.title || formData.value.title.length < 5) return
 
   try {
     if (!isEditMode.value) {
-      // Solo auto-guardar si hay contenido mínimo
+      // Solo auto-guardar si hay contenido mínimo y no se está enviando
+      if (submitting.value) return
+      
       const createData: CreateNewsDto = {
         title: formData.value.title,
         subtitle: formData.value.subtitle,
@@ -163,23 +256,64 @@ const scheduleAutoSave = () => {
   if (autoSaveTimer.value) {
     clearTimeout(autoSaveTimer.value)
   }
-  autoSaveTimer.value = setTimeout(autoSaveDraft, 3000) // 3 segundos después de parar de escribir
+  
+  // Solo programar auto-guardado si no se está enviando manualmente
+  if (!submitting.value && !hasNavigated.value) {
+    autoSaveTimer.value = setTimeout(autoSaveDraft, 3000) // 3 segundos después de parar de escribir
+  }
 }
+
+// Timer para prevenir múltiples envíos
+let submitDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 // Guardar como borrador
 const saveDraft = async () => {
+  // Prevenir múltiples clicks rápidos
+  if (submitting.value) return
+
+  // Limpiar cualquier timer previo
+  if (submitDebounceTimer) {
+    clearTimeout(submitDebounceTimer)
+  }
+  
+  // Limpiar auto-guardado para evitar conflictos
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value)
+  }
+
+  // Ejecutar inmediatamente sin debounce para evitar duplicados
   isDraft.value = true
   await submitForm()
 }
 
 // Enviar para revisión
 const submitForReview = async () => {
+  // Prevenir múltiples clicks rápidos
+  if (submitting.value) return
+
+  // Limpiar cualquier timer previo
+  if (submitDebounceTimer) {
+    clearTimeout(submitDebounceTimer)
+  }
+  
+  // Limpiar auto-guardado para evitar conflictos
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value)
+  }
+
+  // Ejecutar inmediatamente sin debounce para evitar duplicados
   isDraft.value = false
   await submitForm()
 }
 
 // Enviar formulario
 const submitForm = async () => {
+  // Doble verificación para prevenir envíos múltiples
+  if (submitting.value) {
+    console.warn('Intento de envío múltiple bloqueado')
+    return
+  }
+
   const isValid = await v$.value.$validate()
 
   if (!isValid) {
@@ -210,8 +344,18 @@ const submitForm = async () => {
       }
 
       result = await updateNews(newsId.value, updateData)
+    } else if (isCourtSubmission.value) {
+      // Envío especial desde juzgados
+      const courtData = {
+        title: formData.value.title,
+        content: formData.value.content,
+        type: formData.value.type as 'aviso' | 'comunicado',
+        image: imageFile.value || undefined,
+      }
+
+      result = await submitFromCourt(courtData)
     } else {
-      // Modo creación
+      // Modo creación normal
       const createData: CreateNewsDto = {
         title: formData.value.title,
         subtitle: formData.value.subtitle,
@@ -229,18 +373,24 @@ const submitForm = async () => {
         summary: 'Éxito',
         detail: isEditMode.value
           ? 'Noticia actualizada correctamente'
-          : 'Noticia creada correctamente',
+          : isCourtSubmission.value
+            ? 'Contenido enviado correctamente al Director de Prensa'
+            : 'Noticia creada correctamente',
         life: 3000,
       })
 
-      // Redirigir al detalle
-      setTimeout(() => {
-        if (result.data?.id) {
-          router.push(`/noticias/${result.data.id}`)
-        } else {
-          router.push('/noticias')
-        }
-      }, 1000)
+      // Redirigir al detalle después de un breve delay
+      // Usar replace en lugar de push para evitar problemas de navegación
+      if (!hasNavigated.value) {
+        hasNavigated.value = true
+        setTimeout(() => {
+          if (result.data?.id) {
+            router.replace(`/noticias/${result.data.id}`)
+          } else {
+            router.replace('/noticias')
+          }
+        }, 1000)
+      }
     } else {
       toast.add({
         severity: 'error',
@@ -401,6 +551,14 @@ onUnmounted(() => {
                 <small v-if="v$.type.$error" class="p-error">
                   {{ getErrorMessage('type') }}
                 </small>
+
+                <!-- Aviso para envíos desde juzgado -->
+                <Message v-if="isCourtSubmission" severity="info" :closable="false" class="mt-3">
+                  <div class="text-sm">
+                    <strong>Envío desde Juzgado:</strong> Solo puedes crear avisos y comunicados. El
+                    contenido será enviado directamente al Director de Prensa para su aprobación.
+                  </div>
+                </Message>
               </div>
             </div>
           </template>

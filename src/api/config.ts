@@ -49,6 +49,11 @@ export const API_ENDPOINTS = {
   NEWS_STATS: '/news/statistics',
   NEWS_HISTORY: (id: string) => `/news/${id}/history`,
 
+  // Nuevos endpoints de noticias por rol
+  NEWS_MY_NEWS: '/news/my-news',
+  NEWS_PENDING_APPROVAL: '/news/pending-approval',
+  NEWS_CREATED_BY_ME: '/news/created-by-me',
+
   // Contacto
   CONTACT_PUBLIC: '/contact/public',
   CONTACT: '/contact',

@@ -287,16 +287,16 @@ const loadStats = async () => {
     // Cargar estadísticas de noticias
     const newsResult = await newsStore.fetchStatistics()
     if (newsResult.success && newsStore.statistics) {
-      stats.value.noticiasTotal = newsStore.statistics.total
+      stats.value.noticiasTotal = newsStore.statistics.total || 0
       // Calcular pendientes según rol
       if (userRole.value === 'presidente_cspj' || userRole.value === 'vicepresidente_cspj') {
-        stats.value.noticiasPendientes = newsStore.statistics.byStatus.pending_president || 0
+        stats.value.noticiasPendientes = newsStore.statistics.byStatus?.pending_president || 0
       } else if (userRole.value === 'director_prensa') {
-        stats.value.noticiasPendientes = newsStore.statistics.byStatus.pending_director || 0
+        stats.value.noticiasPendientes = newsStore.statistics.byStatus?.pending_director || 0
       } else {
         stats.value.noticiasPendientes =
-          (newsStore.statistics.byStatus.pending_director || 0) +
-          (newsStore.statistics.byStatus.pending_president || 0)
+          (newsStore.statistics.byStatus?.pending_director || 0) +
+          (newsStore.statistics.byStatus?.pending_president || 0)
       }
     }
   } catch (error) {

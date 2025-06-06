@@ -1,22 +1,88 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import Card from 'primevue/card'
 import { useAuth } from '@/composables/useAuth'
+import { newsService } from '@/services/news.service'
 
 interface Props {
-  total: number
-  pending: number
-  published: number
-  rejected: number
+  total?: number
+  pending?: number
+  published?: number
+  rejected?: number
   draft?: number
   byType?: {
-    noticia: number
-    aviso: number
-    comunicado: number
+    noticia?: number
+    aviso?: number
+    comunicado?: number
   }
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  total: 0,
+  pending: 0,
+  published: 0,
+  rejected: 0,
+  draft: 0,
+  byType: () => ({
+    noticia: 0,
+    aviso: 0,
+    comunicado: 0,
+  }),
+})
+
+// Emits
+const emit = defineEmits<{
+  viewPending: []
+}>()
+
+// Estado para noticias pendientes de aprobación
+const pendingApprovalCount = ref(0)
+const loadingPendingApproval = ref(false)
+
+// Protección contra cargas múltiples
+let lastLoadTime = 0
+const MIN_LOAD_INTERVAL = 10000 // 10 segundos mínimo entre cargas
+
+// Cargar cantidad de noticias pendientes de aprobación
+const loadPendingApprovalCount = async () => {
+  if (!isDirectorPrensa.value && !isPresidenteCspj.value) return
+
+  const now = Date.now()
+
+  // Evitar cargas demasiado frecuentes
+  if (now - lastLoadTime < MIN_LOAD_INTERVAL) {
+    console.debug('loadPendingApprovalCount: Rate limit, usando caché')
+    return
+  }
+
+  // Evitar cargas múltiples simultáneas
+  if (loadingPendingApproval.value) {
+    console.debug('loadPendingApprovalCount: Ya está cargando')
+    return
+  }
+
+  lastLoadTime = now
+  loadingPendingApproval.value = true
+
+  try {
+    const response = await newsService.getNewsPendingApproval({ limit: 1 })
+    if (response.success) {
+      pendingApprovalCount.value = response.pagination.total
+    }
+  } catch (error: any) {
+    // Solo loggear errores que no sean de rate limiting
+    if (error.name !== 'ServiceRateLimitError' && error.name !== 'RateLimitError') {
+      console.error('Error loading pending approval count:', error)
+    }
+    pendingApprovalCount.value = 0
+  } finally {
+    loadingPendingApproval.value = false
+  }
+}
+
+onMounted(() => {
+  loadPendingApprovalCount()
+})
 const { userRole, isAdmin } = useAuth()
 
 const isTecnicoPrensa = computed(() => userRole.value === 'tecnico_prensa')
@@ -25,7 +91,14 @@ const isPresidenteCspj = computed(() => userRole.value === 'presidente_cspj')
 const isJuez = computed(() => userRole.value === 'juez')
 const isPresidenteAudiencia = computed(() => userRole.value === 'presidente_audiencia')
 
+// Solo mostrar tarjetas de estadísticas para roles que NO son director ni presidente
+const showRegularStats = computed(() => {
+  return !isDirectorPrensa.value && !isPresidenteCspj.value
+})
+
 const stats = computed(() => {
+  if (!showRegularStats.value) return []
+
   const items = []
 
   if (isTecnicoPrensa.value) {
@@ -35,24 +108,6 @@ const stats = computed(() => {
       { label: 'En Revisión', value: props.pending, icon: 'pi-send', color: 'orange' },
       { label: 'Publicadas', value: props.published, icon: 'pi-check-circle', color: 'green' },
       { label: 'Rechazadas', value: props.rejected, icon: 'pi-times-circle', color: 'red' },
-    )
-  } else if (isDirectorPrensa.value) {
-    items.push(
-      { label: 'Total Noticias', value: props.total, icon: 'pi-folder', color: 'blue' },
-      { label: 'Pendientes Revisión', value: props.pending, icon: 'pi-clock', color: 'orange' },
-      { label: 'Publicadas', value: props.published, icon: 'pi-check', color: 'green' },
-      { label: 'Rechazadas', value: props.rejected, icon: 'pi-times', color: 'red' },
-    )
-  } else if (isPresidenteCspj.value) {
-    items.push(
-      {
-        label: 'Pendientes Aprobación',
-        value: props.pending,
-        icon: 'pi-briefcase',
-        color: 'orange',
-      },
-      { label: 'Aprobadas Hoy', value: 0, icon: 'pi-verified', color: 'green' },
-      { label: 'Total Procesadas', value: props.published, icon: 'pi-chart-line', color: 'blue' },
     )
   } else if (isJuez.value || isPresidenteAudiencia.value) {
     items.push(
@@ -97,20 +152,94 @@ const getColorClasses = (color: string) => {
 </script>
 
 <template>
-  <Card class="mb-6">
-    <template #content>
-      <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        <div
-          v-for="stat in stats"
-          :key="stat.label"
-          class="text-center p-4 rounded-lg transition-all hover:scale-105"
-          :class="getColorClasses(stat.color)"
-        >
-          <i :class="[stat.icon, 'pi', 'text-2xl mb-2']"></i>
-          <div class="text-2xl font-bold">{{ stat.value }}</div>
-          <div class="text-xs font-medium opacity-80">{{ stat.label }}</div>
+  <div class="mb-6 space-y-4">
+    <!-- Tarjeta especial para aprobaciones pendientes (Director y Presidente) -->
+    <Card
+      v-if="isDirectorPrensa || isPresidenteCspj"
+      class="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50 shadow-lg hover:shadow-xl transition-shadow duration-300"
+    >
+      <template #content>
+        <div class="flex items-center justify-between p-2">
+          <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0 relative">
+              <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-white text-2xl"></i>
+              </div>
+              <!-- Badge pulsante si hay noticias pendientes -->
+              <div
+                v-if="pendingApprovalCount > 0"
+                class="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center animate-pulse"
+              >
+                <span class="text-white text-xs font-bold">{{
+                  pendingApprovalCount > 99 ? '99+' : pendingApprovalCount
+                }}</span>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">
+                {{
+                  isDirectorPrensa
+                    ? 'Noticias Esperando tu Aprobación'
+                    : 'Noticias para Aprobación Presidencial'
+                }}
+              </h3>
+              <p class="text-sm text-gray-600 mt-1">
+                {{
+                  isDirectorPrensa
+                    ? 'Como Director de Prensa, tienes noticias pendientes de revisar y aprobar'
+                    : 'Como Presidente CSPJ, tienes noticias pendientes de aprobación final'
+                }}
+              </p>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-4xl font-bold text-orange-600">
+              <span v-if="loadingPendingApproval">
+                <i class="pi pi-spin pi-spinner text-2xl"></i>
+              </span>
+              <span v-else>{{ pendingApprovalCount }}</span>
+            </div>
+            <div class="text-sm text-orange-700 font-medium">
+              {{ pendingApprovalCount === 1 ? 'noticia pendiente' : 'noticias pendientes' }}
+            </div>
+            <div v-if="pendingApprovalCount > 0" class="mt-2">
+              <button
+                class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-all duration-200 transform hover:scale-105 shadow-md"
+                @click="$emit('viewPending')"
+              >
+                <i class="pi pi-eye mr-2"></i>
+                Ver Pendientes
+              </button>
+            </div>
+            <div v-else-if="!loadingPendingApproval" class="mt-2">
+              <div
+                class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium border border-green-200"
+              >
+                <i class="pi pi-check mr-2"></i>
+                ¡Todo al día!
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </template>
-  </Card>
+      </template>
+    </Card>
+
+    <!-- Tarjetas de estadísticas regulares (solo para otros roles) -->
+    <Card v-if="showRegularStats && stats.length > 0">
+      <template #content>
+        <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div
+            v-for="stat in stats"
+            :key="stat.label"
+            class="text-center p-4 rounded-lg transition-all hover:scale-105"
+            :class="getColorClasses(stat.color)"
+          >
+            <i :class="[stat.icon, 'pi', 'text-2xl mb-2']"></i>
+            <div class="text-2xl font-bold">{{ stat.value }}</div>
+            <div class="text-xs font-medium opacity-80">{{ stat.label }}</div>
+          </div>
+        </div>
+      </template>
+    </Card>
+  </div>
 </template>

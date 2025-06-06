@@ -1,2 +1,7 @@
 export { default as NewsCard } from './NewsCard.vue'
 export { default as NewsFilters } from './NewsFilters.vue'
+export { default as NewsStatsCard } from './NewsStatsCard.vue'
+export { default as NewsStatusBadge } from './NewsStatusBadge.vue'
+export { default as NewsActionButtons } from './NewsActionButtons.vue'
+export { default as NewsApprovalTimeline } from './NewsApprovalTimeline.vue'
+export { default as NewsPendingApprovalCard } from './NewsPendingApprovalCard.vue'

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated, onUnmounted, watch } from 'vue'
 import { useNews } from '@/composables/useNews'
 import { useAuth } from '@/composables/useAuth'
+import { useRouter, useRoute } from 'vue-router'
 import { NewsType, NewsStatus, getNewsTypeLabel, getNewsStatusLabel } from '@/types/news'
 import type { News } from '@/types/news'
 import NewsStatsCard from '@/components/news/NewsStatsCard.vue'
@@ -22,17 +23,21 @@ import { useConfirm } from 'primevue/useconfirm'
 
 const toast = useToast()
 const confirm = useConfirm()
-const { userRole, isAdmin } = useAuth()
+const router = useRouter()
+const route = useRoute()
+const { user, userRole, isAdmin } = useAuth()
 
 const {
   newsList,
   loading,
   pagination,
   newsStats,
+  needsRefresh,
   canCreateNews,
   canSubmitFromCourt,
   canEdit,
   canDelete,
+  canSubmitToDirector,
   needsMyAction,
   getNewsStatusBadge,
   getNewsTypeColor,
@@ -43,8 +48,10 @@ const {
   navigateToEdit,
   navigateToDetail,
   navigateToCourtSubmission,
+  submitToDirector,
   deleteNews,
   refreshNews,
+  checkAndRefreshIfNeeded,
   fetchStatistics,
 } = useNews()
 
@@ -52,8 +59,21 @@ const {
 const isTecnicoPrensa = computed(() => userRole.value === 'tecnico_prensa')
 const isDirectorPrensa = computed(() => userRole.value === 'director_prensa')
 const isPresidenteCspj = computed(() => userRole.value === 'presidente_cspj')
+const isVicepresidenteCspj = computed(() => userRole.value === 'vicepresidente_cspj')
 const isJuez = computed(() => userRole.value === 'juez')
 const isPresidenteAudiencia = computed(() => userRole.value === 'presidente_audiencia')
+
+// Verificar qué filtros mostrar según el rol
+const showTypeFilter = computed(() => {
+  // Técnicos y jueces pueden filtrar por tipo
+  return isTecnicoPrensa.value || isJuez.value || isPresidenteAudiencia.value || isAdmin.value
+})
+
+const showStatusFilter = computed(() => {
+  // Solo técnicos y admins pueden filtrar por estado
+  // Director y presidente ven un estado específico
+  return isTecnicoPrensa.value || isAdmin.value
+})
 
 // Estado local
 const searchTerm = ref('')
@@ -77,13 +97,44 @@ const statusOptions = [
   { label: 'Rechazado', value: NewsStatus.REJECTED },
 ]
 
-// Cargar estadísticas al montar
-onMounted(() => {
-  fetchStatistics()
+// Manejar vista de noticias pendientes
+const handleViewPending = () => {
+  if (isDirectorPrensa.value) {
+    setStatusFilter(NewsStatus.PENDING_DIRECTOR)
+  } else if (isPresidenteCspj.value || isVicepresidenteCspj.value) {
+    setStatusFilter(NewsStatus.PENDING_PRESIDENT)
+  }
+}
+
+// Función para cargar datos cuando sea necesario
+const loadDataIfNeeded = async () => {
+  // Verificar si necesita recarga por acciones previas
+  const wasRefreshed = await checkAndRefreshIfNeeded()
+  
+  // Si no se refrescó y la lista está vacía, hacer carga inicial
+  if (!wasRefreshed && newsList.value.length === 0) {
+    refreshNews()
+    await fetchStatistics()
+  }
+}
+
+// Cargar datos al montar
+onMounted(async () => {
+  await loadDataIfNeeded()
+})
+
+// Recargar cuando el componente se activa (si usamos keep-alive)
+onActivated(async () => {
+  await loadDataIfNeeded()
 })
 
 // Métodos
 const onSearch = () => {
+  setSearchFilter(searchTerm.value)
+}
+
+const onSearchInput = () => {
+  // El debounce se maneja en el composable
   setSearchFilter(searchTerm.value)
 }
 
@@ -120,7 +171,36 @@ const confirmDelete = (news: News) => {
           detail: 'Noticia eliminada correctamente',
           life: 3000,
         })
-        refreshNews()
+        // Las estadísticas se actualizarán automáticamente al recargar la lista
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: result.message,
+          life: 3000,
+        })
+      }
+    },
+  })
+}
+
+const handleSubmitToDirector = async (news: News) => {
+  confirm.require({
+    message: `¿Enviar "${news.title}" al Director de Prensa para su revisión?`,
+    header: 'Confirmar envío',
+    icon: 'pi pi-send',
+    acceptLabel: 'Enviar',
+    rejectLabel: 'Cancelar',
+    accept: async () => {
+      const result = await submitToDirector(news.id)
+      if (result.success) {
+        toast.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Noticia enviada al director para revisión',
+          life: 3000,
+        })
+        // Las estadísticas se actualizarán automáticamente al recargar la lista
       } else {
         toast.add({
           severity: 'error',
@@ -144,18 +224,9 @@ const formatDate = (date: string) => {
   })
 }
 
-// Obtener imagen o placeholder
-const getNewsImage = (news: News) => {
-  if (news.imageUrl) return news.imageUrl
-
-  // Placeholder según tipo
-  const placeholders = {
-    noticia: '/images/news-placeholder.jpg',
-    aviso: '/images/notice-placeholder.jpg',
-    comunicado: '/images/announcement-placeholder.jpg',
-  }
-
-  return placeholders[news.type] || '/images/default-placeholder.jpg'
+// Verificar si la noticia tiene imagen
+const hasImage = (news: News) => {
+  return !!(news.imageUrl && news.imageUrl.trim() !== '')
 }
 </script>
 
@@ -168,9 +239,11 @@ const getNewsImage = (news: News) => {
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-gray-900">
         <template v-if="isTecnicoPrensa">Mis Noticias</template>
-        <template v-else-if="isDirectorPrensa">Gestión de Prensa</template>
-        <template v-else-if="isPresidenteCspj">Aprobación de Noticias</template>
-        <template v-else-if="isJuez || isPresidenteAudiencia">Mis Envíos</template>
+        <template v-else-if="isDirectorPrensa">Mis Noticias y Aprobaciones</template>
+        <template v-else-if="isPresidenteCspj || isVicepresidenteCspj"
+          >Mis Noticias y Aprobación Presidencial</template
+        >
+        <template v-else-if="isJuez || isPresidenteAudiencia">Mis Avisos y Comunicados</template>
         <template v-else>Gestión de Noticias</template>
       </h1>
       <p class="text-gray-600 mt-2">
@@ -178,9 +251,11 @@ const getNewsImage = (news: News) => {
           >Administra y supervisa las noticias que has creado</template
         >
         <template v-else-if="isDirectorPrensa"
-          >Revisa y aprueba las noticias del departamento de prensa</template
+          >Gestiona tus noticias y aprueba las pendientes de revisión</template
         >
-        <template v-else-if="isPresidenteCspj">Revisa y aprueba noticias para publicación</template>
+        <template v-else-if="isPresidenteCspj || isVicepresidenteCspj"
+          >Gestiona tus noticias y aprueba las pendientes presidenciales</template
+        >
         <template v-else-if="isJuez || isPresidenteAudiencia"
           >Gestiona los avisos y comunicados que has enviado</template
         >
@@ -203,7 +278,10 @@ const getNewsImage = (news: News) => {
         aviso: newsStats.porTipo.find((t) => t.tipo === 'Avisos')?.cantidad || 0,
         comunicado: newsStats.porTipo.find((t) => t.tipo === 'Comunicados')?.cantidad || 0,
       }"
+      @viewPending="handleViewPending"
     />
+
+    <!-- Las noticias pendientes ya aparecen en la lista principal filtradas por el backend -->
 
     <!-- Toolbar con filtros -->
     <Card class="mb-6">
@@ -220,12 +298,14 @@ const getNewsImage = (news: News) => {
                   v-model="searchTerm"
                   placeholder="Buscar por título..."
                   class="w-80"
+                  @input="onSearchInput"
                   @keyup.enter="onSearch"
                 />
               </IconField>
 
               <!-- Filtro por tipo -->
               <Select
+                v-if="showTypeFilter"
                 v-model="selectedType"
                 :options="typeOptions"
                 optionLabel="label"
@@ -237,6 +317,7 @@ const getNewsImage = (news: News) => {
 
               <!-- Filtro por estado -->
               <Select
+                v-if="showStatusFilter"
                 v-model="selectedStatus"
                 :options="statusOptions"
                 optionLabel="label"
@@ -302,13 +383,16 @@ const getNewsImage = (news: News) => {
           <!-- Columna Imagen -->
           <Column header="Imagen" style="width: 8%">
             <template #body="{ data }">
-              <div class="w-16 h-16 rounded overflow-hidden bg-gray-100">
+              <div
+                class="w-16 h-16 rounded overflow-hidden bg-gray-100 flex items-center justify-center"
+              >
                 <img
-                  :src="getNewsImage(data)"
+                  v-if="hasImage(data)"
+                  :src="data.imageUrl"
                   :alt="data.title"
                   class="w-full h-full object-cover"
-                  @error="(e: any) => (e.target.src = '/images/default-placeholder.jpg')"
                 />
+                <i v-else class="pi pi-image text-gray-400 text-xl"></i>
               </div>
             </template>
           </Column>
@@ -414,6 +498,18 @@ const getNewsImage = (news: News) => {
                   size="small"
                 />
 
+                <!-- Enviar al director -->
+                <Button
+                  v-if="canSubmitToDirector(data)"
+                  icon="pi pi-send"
+                  severity="info"
+                  text
+                  rounded
+                  v-tooltip.top="'Enviar al Director'"
+                  @click="handleSubmitToDirector(data)"
+                  size="small"
+                />
+
                 <!-- Eliminar -->
                 <Button
                   v-if="canDelete(data)"
@@ -450,8 +546,8 @@ const getNewsImage = (news: News) => {
                 <template v-else-if="isDirectorPrensa">
                   No hay noticias pendientes de revisión
                 </template>
-                <template v-else-if="isPresidenteCspj">
-                  No hay noticias pendientes de tu aprobación
+                <template v-else-if="isPresidenteCspj || isVicepresidenteCspj">
+                  No hay noticias pendientes de aprobación presidencial
                 </template>
                 <template v-else-if="isJuez || isPresidenteAudiencia">
                   No has enviado avisos o comunicados

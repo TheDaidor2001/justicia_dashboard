@@ -8,8 +8,8 @@ export enum NewsType {
 
 export enum NewsStatus {
   DRAFT = 'draft',
-  PENDING_DIRECTOR = 'pending_director',
-  PENDING_PRESIDENT = 'pending_president',
+  PENDING_DIRECTOR = 'pending_director_approval',
+  PENDING_PRESIDENT = 'pending_president_approval',
   PUBLISHED = 'published',
   REJECTED = 'rejected',
 }
@@ -25,8 +25,9 @@ export interface News {
   imageUrl?: string
   imagePublicId?: string
   publishedAt?: string
-  createdBy: string
-  departmentId: string
+  createdBy?: string // Puede venir del backend legacy
+  authorId?: string // Nuevo campo del backend
+  departmentId?: string
   rejectionReason?: string
   viewCount: number
   createdAt: string
@@ -37,6 +38,11 @@ export interface News {
     id: string
     fullName: string
     role: string
+  }
+  author?: {
+    id: string
+    fullName: string
+    email: string
   }
   department?: {
     id: string
@@ -86,8 +92,10 @@ export interface NewsFilters {
   status?: NewsStatus
   departmentId?: string
   createdBy?: string
+  authorId?: string
   dateFrom?: string
   dateTo?: string
+  _t?: number
 }
 
 export interface NewsResponse {
@@ -103,26 +111,36 @@ export interface NewsResponse {
 }
 
 export interface NewsStatistics {
-  total: number
-  byType: {
-    noticia: number
-    aviso: number
-    comunicado: number
+  total?: number
+  byType?: {
+    noticia?: number
+    aviso?: number
+    comunicado?: number
   }
-  byStatus: {
-    draft: number
-    pending_director: number
-    pending_president: number
-    published: number
-    rejected: number
+  byStatus?: {
+    draft?: number
+    pending_director?: number
+    pending_president?: number
+    published?: number
+    rejected?: number
   }
-  publishedThisMonth: number
-  viewsThisMonth: number
+  publishedThisMonth?: number
+  viewsThisMonth?: number
 }
 
 export interface NewsApprovalHistory {
   id: string
-  action: 'create' | 'submit' | 'approve_director' | 'approve_president' | 'reject' | 'publish' | 'edit' | 'submit_to_director' | 'submit_to_president' | 'submit_from_court'
+  action:
+    | 'create'
+    | 'submit'
+    | 'approve_director'
+    | 'approve_president'
+    | 'reject'
+    | 'publish'
+    | 'edit'
+    | 'submit_to_director'
+    | 'submit_to_president'
+    | 'submit_from_court'
   comments?: string
   createdAt: string
   fromStatus?: string | null
@@ -152,7 +170,16 @@ export const getNewsStatusLabel = (status: NewsStatus): string => {
     [NewsStatus.PUBLISHED]: 'Publicado',
     [NewsStatus.REJECTED]: 'Rechazado',
   }
-  return labels[status] || status
+  // También manejar los valores que vienen del backend directamente
+  const directLabels: Record<string, string> = {
+    draft: 'Borrador',
+    pending_director_approval: 'Pendiente Director',
+    pending_president_approval: 'Pendiente Presidente',
+    published: 'Publicado',
+    rejected: 'Rechazado',
+  }
+
+  return labels[status] || directLabels[status as string] || status
 }
 
 export const getNewsStatusBadge = (status: NewsStatus) => {
@@ -171,7 +198,25 @@ export const getNewsStatusBadge = (status: NewsStatus) => {
     [NewsStatus.PUBLISHED]: { severity: 'success', label: 'Publicado', icon: 'pi-check' },
     [NewsStatus.REJECTED]: { severity: 'danger', label: 'Rechazado', icon: 'pi-times' },
   }
-  return badges[status] || badges[NewsStatus.DRAFT]
+
+  // También manejar los valores que vienen del backend directamente
+  const directBadges: Record<string, any> = {
+    draft: { severity: 'secondary', label: 'Borrador', icon: 'pi-pencil' },
+    pending_director_approval: {
+      severity: 'warning',
+      label: 'Pendiente Director',
+      icon: 'pi-clock',
+    },
+    pending_president_approval: {
+      severity: 'info',
+      label: 'Pendiente Presidente',
+      icon: 'pi-user',
+    },
+    published: { severity: 'success', label: 'Publicado', icon: 'pi-check' },
+    rejected: { severity: 'danger', label: 'Rechazado', icon: 'pi-times' },
+  }
+
+  return badges[status] || directBadges[status as string] || badges[NewsStatus.DRAFT]
 }
 
 export const getNewsTypeColor = (type: NewsType): string => {

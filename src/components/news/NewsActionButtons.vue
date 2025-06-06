@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const { userRole } = useAuth()
+const { user, userRole } = useAuth()
 const {
   canEdit,
   canDelete,
@@ -66,7 +66,8 @@ const availableActions = computed(() => {
   if (canApproveAsDirector(props.news)) {
     actions.push({
       key: 'approve-director',
-      label: props.news.type === 'noticia' ? 'Aprobar y Enviar' : 'Aprobar y Publicar',
+      label:
+        props.news.type === 'noticia' ? 'Aprobar y Enviar al Presidente' : 'Aprobar y Publicar',
       icon: 'pi-check',
       severity: 'success',
       action: () => emit('approve-director'),
@@ -138,7 +139,7 @@ const getPrimaryActionContext = computed(() => {
   if (canApproveAsDirector(props.news)) {
     if (props.news.type === 'noticia') {
       return {
-        title: 'Aprobar y Enviar',
+        title: 'Aprobar y Enviar al Presidente',
         description: 'La noticia será enviada al Presidente CSPJ para aprobación final',
         icon: 'pi-check',
         color: 'success',
@@ -146,7 +147,7 @@ const getPrimaryActionContext = computed(() => {
     } else {
       return {
         title: 'Aprobar y Publicar',
-        description: 'El aviso/comunicado será publicado inmediatamente',
+        description: `El ${props.news.type} será publicado inmediatamente (flujo simplificado)`,
         icon: 'pi-check',
         color: 'success',
       }
@@ -203,7 +204,10 @@ const getPrimaryActionContext = computed(() => {
     </div>
 
     <!-- Separador -->
-    <div v-if="primaryActions.length > 0 && secondaryActions.length > 0" class="my-4 border-t"></div>
+    <div
+      v-if="primaryActions.length > 0 && secondaryActions.length > 0"
+      class="my-4 border-t"
+    ></div>
 
     <!-- Acciones secundarias -->
     <div v-if="secondaryActions.length > 0" class="space-y-2">
@@ -225,6 +229,21 @@ const getPrimaryActionContext = computed(() => {
     <div v-if="availableActions.length === 0" class="text-center py-6 text-gray-500">
       <i class="pi pi-lock text-2xl mb-2 block"></i>
       <p class="text-sm">No hay acciones disponibles para esta noticia</p>
+
+      <div
+        v-if="!((props.news as any).authorId || props.news.createdBy)"
+        class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg"
+      >
+        <div class="flex items-start gap-2">
+          <i class="pi pi-exclamation-triangle text-orange-500 mt-0.5"></i>
+          <div class="text-left">
+            <p class="text-sm text-orange-800 font-medium">Problema de autoría</p>
+            <p class="text-xs text-orange-700 mt-1">
+              Esta noticia no tiene asignado un autor. Contacta al administrador para resolverlo.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
