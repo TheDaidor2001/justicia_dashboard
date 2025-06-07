@@ -282,7 +282,7 @@ defineExpose({
               <Button
                 icon="pi pi-download"
                 severity="info"
-                text
+                outlined
                 rounded
                 v-tooltip.top="'Descargar'"
                 @click="downloadDocument(data)"
@@ -294,7 +294,7 @@ defineExpose({
                 v-if="data.fileUrl"
                 icon="pi pi-external-link"
                 severity="secondary"
-                text
+                outlined
                 rounded
                 v-tooltip.top="'Abrir en nueva pestaña'"
                 @click="downloadDirectly(data)"
@@ -312,7 +312,7 @@ defineExpose({
                   <Button
                     icon="pi pi-eye"
                     severity="secondary"
-                    text
+                    outlined
                     rounded
                     v-tooltip.top="'Ver imagen'"
                   />
@@ -324,7 +324,7 @@ defineExpose({
                 v-if="canDeleteDocument(data)"
                 icon="pi pi-trash"
                 severity="danger"
-                text
+                outlined
                 rounded
                 v-tooltip.top="'Eliminar'"
                 @click="confirmDelete(data)"

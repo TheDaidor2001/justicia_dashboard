@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
@@ -8,9 +8,11 @@ import { newsService } from '@/services/news.service'
 import { useRouter } from 'vue-router'
 import { getNewsTypeLabel, getNewsTypeColor } from '@/types/news'
 import type { News } from '@/types/news'
+import { useNewsStore } from '@/stores/news'
 
 const { userRole } = useAuth()
 const router = useRouter()
+const newsStore = useNewsStore()
 
 const isDirector = computed(() => userRole.value === 'director_prensa')
 const isPresident = computed(
@@ -48,7 +50,16 @@ const loadPendingNews = async () => {
   }
 }
 
+// Ya no necesitamos el watcher de needsRefresh porque el contenido se actualiza desde otras vistas
+
 onMounted(() => {
+  if (isDirector.value || isPresident.value) {
+    loadPendingNews()
+  }
+})
+
+// Si el componente usa keep-alive, recargar cuando se active
+onActivated(() => {
   if (isDirector.value || isPresident.value) {
     loadPendingNews()
   }

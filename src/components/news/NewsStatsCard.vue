@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from 'vue'
 import Card from 'primevue/card'
 import { useAuth } from '@/composables/useAuth'
 import { newsService } from '@/services/news.service'
+import { useNewsStore } from '@/stores/news'
 
 interface Props {
   total?: number
@@ -78,10 +79,14 @@ const loadPendingApprovalCount = async () => {
   }
 }
 
+const { userRole, isAdmin } = useAuth()
+const newsStore = useNewsStore()
+
+// Ya no necesitamos el watcher de needsRefresh, las estadísticas se cargan cuando se navega
+
 onMounted(() => {
   loadPendingApprovalCount()
 })
-const { userRole, isAdmin } = useAuth()
 
 const isTecnicoPrensa = computed(() => userRole.value === 'tecnico_prensa')
 const isDirectorPrensa = computed(() => userRole.value === 'director_prensa')

@@ -6,6 +6,7 @@ import { useAuth } from '@/composables/useAuth'
 import { NewsStatus, getNewsTypeLabel, getNewsStatusLabel } from '@/types/news'
 import type { News, NewsApprovalHistory } from '@/types/news'
 import { newsService } from '@/services/news.service'
+import { useNewsStore } from '@/stores/news'
 import NewsActionButtons from '@/components/news/NewsActionButtons.vue'
 import NewsApprovalTimeline from '@/components/news/NewsApprovalTimeline.vue'
 import ApprovalDialog from '@/components/shared/ApprovalDialog.vue'
@@ -33,6 +34,7 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 const confirm = useConfirm()
+const newsStore = useNewsStore()
 
 const { user, userRole } = useAuth()
 const {
@@ -199,6 +201,8 @@ watch(
   },
 )
 
+// Ya no necesitamos el watcher de needsRefresh porque recargamos directamente después de la acción
+
 onMounted(() => {
   loadNews()
 })
@@ -222,6 +226,8 @@ const handleSubmitToDirector = async () => {
         life: 3000,
       })
       hasLoadedHistory.value = false
+      // Recargar los datos para mostrar el nuevo estado
+      await loadNews()
     } else {
       toast.add({
         severity: 'error',
@@ -301,6 +307,8 @@ const confirmApprove = async (comments: string) => {
         life: 3000,
       })
       showApproveDialog.value = false
+      // Recargar los datos de la noticia para mostrar el estado actualizado
+      await loadNews()
     } else {
       // Mostrar error más amigable para problemas del backend
       let errorMessage = 'Error interno del servidor'
@@ -345,6 +353,8 @@ const confirmReject = async (comments: string) => {
         life: 3000,
       })
       showRejectDialog.value = false
+      // Recargar los datos de la noticia para mostrar el estado actualizado
+      await loadNews()
     } else {
       toast.add({
         severity: 'error',
@@ -392,7 +402,7 @@ const formatDate = (date: string) => {
         <div class="flex items-center gap-2 text-gray-600 mb-4">
           <Button
             icon="pi pi-home"
-            severity="secondary"
+            severity="contrast"
             text
             @click="router.push('/dashboard')"
             v-tooltip.top="'Volver al Dashboard'"
@@ -400,7 +410,7 @@ const formatDate = (date: string) => {
           <i class="pi pi-chevron-right text-sm"></i>
           <Button
             icon="pi pi-arrow-left"
-            severity="secondary"
+            severity="contrast"
             text
             @click="router.push('/noticias')"
           />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { useRouter } from 'vue-router'
 import { useExpedientesStore } from '@/stores/expedientes'
@@ -358,9 +358,16 @@ const getIconColor = (color: string) => {
   return colors[color] || colors.gray
 }
 
+// Ya no necesitamos el watcher de needsRefresh, las estadísticas se actualizan cuando el usuario navega
+
 onMounted(() => {
   updateTime()
   setInterval(updateTime, 60000) // Actualizar cada minuto
+  loadStats()
+})
+
+// Recargar estadísticas cuando la vista se active (si usa keep-alive)
+onActivated(() => {
   loadStats()
 })
 </script>
@@ -384,26 +391,15 @@ onMounted(() => {
           <!-- Usuario y logout -->
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-3">
-              <Avatar
-                :label="userInitials"
-                shape="circle"
-                class="bg-gray-200 text-gray-700"
-                size="normal"
-              />
+              <Avatar :label="userInitials" shape="circle" class="bg-gray-200 text-gray-700" size="normal" />
               <div class="hidden sm:block text-right">
                 <p class="text-sm font-medium text-gray-900">{{ userName }}</p>
                 <p class="text-xs text-gray-500 capitalize">{{ userRole?.replace('_', ' ') }}</p>
               </div>
             </div>
 
-            <Button
-              icon="pi pi-sign-out"
-              severity="secondary"
-              text
-              rounded
-              v-tooltip.bottom="'Cerrar sesión'"
-              @click="handleLogout"
-            />
+            <Button icon="pi pi-sign-out" severity="secondary" class="text-white" text rounded
+              v-tooltip.bottom="'Cerrar sesión'" @click="handleLogout" />
           </div>
         </div>
       </div>
@@ -430,18 +426,13 @@ onMounted(() => {
 
       <!-- Grid de enlaces -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <div
-          v-for="link in dashboardLinks"
-          :key="link.id"
-          @click="navigateTo(link)"
+        <div v-for="link in dashboardLinks" :key="link.id" @click="navigateTo(link)"
           class="group relative rounded-xl p-6 transition-all duration-200 cursor-pointer"
-          :class="[getBgColor(link.color), link.available ? '' : 'opacity-60']"
-        >
+          :class="[getBgColor(link.color), link.available ? '' : 'opacity-60']">
           <!-- Badge de estado -->
           <div v-if="link.badge" class="absolute top-4 right-4">
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
-            >
+              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
               {{ link.badge }}
             </span>
           </div>
@@ -449,8 +440,7 @@ onMounted(() => {
           <!-- Icono -->
           <div class="mb-4">
             <div
-              class="w-12 h-12 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform"
-            >
+              class="w-12 h-12 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
               <i :class="[link.icon, 'pi', 'text-xl', getIconColor(link.color)]"></i>
             </div>
           </div>
@@ -472,15 +462,8 @@ onMounted(() => {
 
           <!-- Indicador de disponibilidad -->
           <div class="absolute bottom-4 right-4">
-            <i
-              v-if="!link.available"
-              class="pi pi-lock text-gray-400"
-              v-tooltip.top="'Próximamente'"
-            ></i>
-            <i
-              v-else
-              class="pi pi-arrow-right text-gray-400 group-hover:translate-x-1 transition-transform"
-            ></i>
+            <i v-if="!link.available" class="pi pi-lock text-gray-400" v-tooltip.top="'Próximamente'"></i>
+            <i v-else class="pi pi-arrow-right text-gray-400 group-hover:translate-x-1 transition-transform"></i>
           </div>
         </div>
       </div>

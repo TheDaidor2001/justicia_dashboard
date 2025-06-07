@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import { useNews } from '@/composables/useNews'
 import { useAuth } from '@/composables/useAuth'
 import { NewsStatus, NewsType } from '@/types/news'
 import type { News } from '@/types/news'
+import { useNewsStore } from '@/stores/news'
 import NewsCard from '@/components/news/NewsCard.vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -22,6 +23,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 const toast = useToast()
 const confirm = useConfirm()
 const { userRole } = useAuth()
+const newsStore = useNewsStore()
 
 const {
   newsList,
@@ -98,8 +100,22 @@ const pageDescription = computed(() => {
   return ''
 })
 
+const checkAndRefreshIfNeeded = async () => {
+  if (newsStore.needsRefresh) {
+    await refreshNews()
+    newsStore.clearNeedsRefresh()
+  }
+}
+
+// Ya no necesitamos el watcher de needsRefresh porque eliminamos directamente de la lista
+
 onMounted(() => {
   refreshNews()
+})
+
+// Recargar cuando se active la vista (si usa keep-alive)
+onActivated(() => {
+  checkAndRefreshIfNeeded()
 })
 
 // Métodos de aprobación
@@ -217,7 +233,7 @@ const formatDate = (date: string) => {
       <div class="flex items-center gap-2 text-gray-600 mb-4">
         <Button
           icon="pi pi-home"
-          severity="secondary"
+          severity="contrast"
           text
           @click="$router.push('/dashboard')"
           v-tooltip.top="'Volver al Dashboard'"

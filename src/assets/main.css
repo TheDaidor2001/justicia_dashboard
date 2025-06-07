@@ -37,6 +37,31 @@
   --p-primary-hover-color: oklch(0.6 0.162 75.834);
   --p-primary-active-color: oklch(0.55 0.162 75.834);
 
+  /* Colores para botones con buen contraste */
+  --p-green-500: #22c55e;
+  --p-green-600: #16a34a;
+  --p-green-contrast-color: #ffffff;
+  
+  --p-red-500: #ef4444;
+  --p-red-600: #dc2626;
+  --p-red-contrast-color: #ffffff;
+  
+  --p-blue-500: #3b82f6;
+  --p-blue-600: #2563eb;
+  --p-blue-contrast-color: #ffffff;
+  
+  --p-yellow-500: #eab308;
+  --p-yellow-600: #ca8a04;
+  --p-yellow-contrast-color: #ffffff;
+  
+  --p-gray-500: #6b7280;
+  --p-gray-600: #4b5563;
+  --p-gray-contrast-color: #ffffff;
+  
+  --p-slate-900: #0f172a;
+  --p-slate-800: #1e293b;
+  --p-slate-contrast-color: #ffffff;
+
   --p-surface-0: #ffffff;
   --p-surface-50: #fafafa;
   --p-surface-100: #f5f5f5;
@@ -46,6 +71,208 @@
   --p-text-color: #212121;
   --p-text-muted-color: #757575;
   --p-border-color: #e0e0e0;
+}
+
+/* Estilos personalizados para iconos blancos en botones primary */
+/* Botones primary sin severity especificado o con severity="primary" */
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) {
+  color: white !important;
+}
+
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) * {
+  color: white !important;
+}
+
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
+  color: white !important;
+}
+
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
+.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+  color: white !important;
+}
+
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-label,
+.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) .p-button-label {
+  color: white !important;
+}
+
+/* Iconos blancos en spinner de carga para botones primary */
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .pi-spinner,
+.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) .pi-spinner {
+  color: white !important;
+}
+
+/* Asegurar que los iconos sean blancos en botones primary cuando están deshabilitados */
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) {
+  color: white !important;
+  opacity: 0.7;
+}
+
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) * {
+  color: white !important;
+  opacity: 0.7;
+}
+
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
+  color: white !important;
+  opacity: 0.7;
+}
+
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
+.p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+  color: white !important;
+  opacity: 0.7;
+}
+
+/* Iconos blancos en estado hover para botones primary */
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) {
+  color: white !important;
+}
+
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) * {
+  color: white !important;
+}
+
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
+  color: white !important;
+}
+
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
+.p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+  color: white !important;
+}
+
+/* Iconos blancos en estado focus para botones primary */
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) {
+  color: white !important;
+}
+
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) * {
+  color: white !important;
+}
+
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
+  color: white !important;
+}
+
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
+.p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+  color: white !important;
+}
+
+/* Iconos blancos en estado active/pressed para botones primary */
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) {
+  color: white !important;
+}
+
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) * {
+  color: white !important;
+}
+
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
+  color: white !important;
+}
+
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
+.p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+  color: white !important;
+}
+
+/* Especial para botones con estilos en línea (como LoginView) */
+button[class*="bg-secondary"] .p-button-icon,
+button[class*="bg-secondary"] i[class*="pi-"] {
+  color: white !important;
+}
+
+/* Estilos para botones outlined - mantener color del fondo pero solo el borde */
+.p-button.p-button-outlined {
+  background: transparent !important;
+}
+
+.p-button.p-button-success.p-button-outlined {
+  border-color: var(--p-green-500) !important;
+  color: var(--p-green-500) !important;
+}
+
+.p-button.p-button-success.p-button-outlined:enabled:hover {
+  background: var(--p-green-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-danger.p-button-outlined {
+  border-color: var(--p-red-500) !important;
+  color: var(--p-red-500) !important;
+}
+
+.p-button.p-button-danger.p-button-outlined:enabled:hover {
+  background: var(--p-red-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-info.p-button-outlined {
+  border-color: var(--p-blue-500) !important;
+  color: var(--p-blue-500) !important;
+}
+
+.p-button.p-button-info.p-button-outlined:enabled:hover {
+  background: var(--p-blue-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-warn.p-button-outlined {
+  border-color: var(--p-yellow-500) !important;
+  color: var(--p-yellow-500) !important;
+}
+
+.p-button.p-button-warn.p-button-outlined:enabled:hover {
+  background: var(--p-yellow-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-secondary.p-button-outlined {
+  border-color: var(--p-gray-500) !important;
+  color: var(--p-gray-500) !important;
+}
+
+.p-button.p-button-secondary.p-button-outlined:enabled:hover {
+  background: var(--p-gray-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-contrast.p-button-outlined {
+  border-color: var(--p-slate-900) !important;
+  color: var(--p-slate-900) !important;
+}
+
+.p-button.p-button-contrast.p-button-outlined:enabled:hover {
+  background: var(--p-slate-900) !important;
+  color: white !important;
+}
+
+/* Forzar color blanco en todos los elementos de botones con fondo sólido */
+.p-button:not(.p-button-outlined):not(.p-button-text) * {
+  color: white !important;
+}
+
+/* Asegurar que los iconos de loading también sean blancos */
+.p-button .pi-spin {
+  color: inherit !important;
 }
 
 body {
@@ -125,14 +352,95 @@ body {
   border-color: oklch(0.681 0.162 75.834) !important;
 }
 
+/* Estilos específicos para cada tipo de botón */
 .p-button {
   background: oklch(0.681 0.162 75.834) !important;
   border-color: oklch(0.681 0.162 75.834) !important;
+  color: white !important;
 }
 
 .p-button:enabled:hover {
   background: oklch(0.6 0.162 75.834) !important;
   border-color: oklch(0.6 0.162 75.834) !important;
+  color: white !important;
+}
+
+/* Botones Success (aprobar) */
+.p-button.p-button-success {
+  background: var(--p-green-500) !important;
+  border-color: var(--p-green-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-success:enabled:hover {
+  background: var(--p-green-600) !important;
+  border-color: var(--p-green-600) !important;
+  color: white !important;
+}
+
+/* Botones Danger (eliminar) */
+.p-button.p-button-danger {
+  background: var(--p-red-500) !important;
+  border-color: var(--p-red-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-danger:enabled:hover {
+  background: var(--p-red-600) !important;
+  border-color: var(--p-red-600) !important;
+  color: white !important;
+}
+
+/* Botones Info (ver más) */
+.p-button.p-button-info {
+  background: var(--p-blue-500) !important;
+  border-color: var(--p-blue-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-info:enabled:hover {
+  background: var(--p-blue-600) !important;
+  border-color: var(--p-blue-600) !important;
+  color: white !important;
+}
+
+/* Botones Warning (editar) */
+.p-button.p-button-warn {
+  background: var(--p-yellow-500) !important;
+  border-color: var(--p-yellow-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-warn:enabled:hover {
+  background: var(--p-yellow-600) !important;
+  border-color: var(--p-yellow-600) !important;
+  color: white !important;
+}
+
+/* Botones Secondary (buscar, refrescar) */
+.p-button.p-button-secondary {
+  background: var(--p-gray-500) !important;
+  border-color: var(--p-gray-500) !important;
+  color: white !important;
+}
+
+.p-button.p-button-secondary:enabled:hover {
+  background: var(--p-gray-600) !important;
+  border-color: var(--p-gray-600) !important;
+  color: white !important;
+}
+
+/* Botones Contrast (navegación) */
+.p-button.p-button-contrast {
+  background: var(--p-slate-900) !important;
+  border-color: var(--p-slate-900) !important;
+  color: white !important;
+}
+
+.p-button.p-button-contrast:enabled:hover {
+  background: var(--p-slate-800) !important;
+  border-color: var(--p-slate-800) !important;
+  color: white !important;
 }
 
 .p-message.p-message-error {

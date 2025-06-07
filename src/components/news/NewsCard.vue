@@ -197,7 +197,7 @@ const cardClass = computed(() => {
               <Button
                 icon="pi pi-pencil"
                 severity="secondary"
-                text
+                outlined
                 rounded
                 size="small"
                 @click="emit('edit', news)"
@@ -207,7 +207,7 @@ const cardClass = computed(() => {
               <Button
                 icon="pi pi-trash"
                 severity="danger"
-                text
+                outlined
                 rounded
                 size="small"
                 @click="emit('delete', news)"

@@ -117,7 +117,7 @@ const onPageChange = (event: any) => {
       <div class="flex items-center gap-2 text-gray-600 mb-4">
         <Button
           icon="pi pi-home"
-          severity="secondary"
+          severity="contrast"
           text
           @click="router.push('/dashboard')"
           v-tooltip.top="'Volver al Dashboard'"

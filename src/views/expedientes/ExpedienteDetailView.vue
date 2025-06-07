@@ -251,7 +251,7 @@ const formatDate = (date: string) => {
         <div class="flex items-center gap-2 text-gray-600 mb-2">
           <Button
             icon="pi pi-home"
-            severity="secondary"
+            severity="contrast"
             text
             @click="router.push('/dashboard')"
             v-tooltip.top="'Volver al Dashboard'"
@@ -259,7 +259,7 @@ const formatDate = (date: string) => {
           <i class="pi pi-chevron-right text-sm"></i>
           <Button
             icon="pi pi-arrow-left"
-            severity="secondary"
+            severity="contrast"
             text
             @click="router.push('/expedientes')"
           />

@@ -6,6 +6,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { NewsType, NewsStatus, getNewsTypeLabel, getNewsStatusLabel } from '@/types/news'
 import type { News } from '@/types/news'
 import NewsStatsCard from '@/components/news/NewsStatsCard.vue'
+import { useNewsStore } from '@/stores/news'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -26,6 +27,7 @@ const confirm = useConfirm()
 const router = useRouter()
 const route = useRoute()
 const { user, userRole, isAdmin } = useAuth()
+const newsStore = useNewsStore()
 
 const {
   newsList,
@@ -132,6 +134,8 @@ const loadDataIfNeeded = async () => {
   }
 }
 
+// Ya no necesitamos el watcher de needsRefresh porque eliminamos directamente de la lista
+
 // Cargar datos al montar
 onMounted(async () => {
   await loadDataIfNeeded()
@@ -185,7 +189,7 @@ const confirmDelete = (news: News) => {
           detail: 'Noticia eliminada correctamente',
           life: 3000,
         })
-        // Las estadísticas se actualizarán automáticamente al recargar la lista
+        // El elemento se eliminó automáticamente de la lista
       } else {
         toast.add({
           severity: 'error',
@@ -214,7 +218,7 @@ const handleSubmitToDirector = async (news: News) => {
           detail: 'Noticia enviada al director para revisión',
           life: 3000,
         })
-        // Las estadísticas se actualizarán automáticamente al recargar la lista
+        // La tabla se actualizará automáticamente via watcher de needsRefresh
       } else {
         toast.add({
           severity: 'error',
@@ -255,7 +259,7 @@ const hasImage = (news: News) => {
       <div class="flex items-center gap-2 text-gray-600 mb-4">
         <Button
           icon="pi pi-home"
-          severity="secondary"
+          severity="contrast"
           text
           @click="router.push('/dashboard')"
           v-tooltip.top="'Volver al Dashboard'"

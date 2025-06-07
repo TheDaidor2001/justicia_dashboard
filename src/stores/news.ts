@@ -305,8 +305,14 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.submitToDirector(id, data)
 
       if (response.success) {
-        // Marcar que se necesita recarga
-        markNeedsRefresh()
+        // Eliminar de la lista local ya que el usuario no debe verlo más
+        newsList.value = newsList.value.filter(news => news.id !== id)
+        
+        // Actualizar paginación
+        if (pagination.value.total > 0) {
+          pagination.value.total -= 1
+        }
+        
         return { success: true, message: 'Noticia enviada al director' }
       }
 
@@ -327,8 +333,15 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.approveAsDirector(id, data)
 
       if (response.success) {
-        // Marcar que se necesita recarga
-        markNeedsRefresh()
+        // Eliminar de la lista local ya que el director no debe verlo más
+        // (va al presidente o se publica directamente)
+        newsList.value = newsList.value.filter(news => news.id !== id)
+        
+        // Actualizar paginación
+        if (pagination.value.total > 0) {
+          pagination.value.total -= 1
+        }
+        
         return { success: true, message: 'Noticia aprobada por director' }
       }
 
@@ -349,8 +362,15 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.approveAsPresident(id, data)
 
       if (response.success) {
-        // Marcar que se necesita recarga
-        markNeedsRefresh()
+        // Eliminar de la lista local ya que el presidente no debe verlo más
+        // (se publica y ya no está pendiente)
+        newsList.value = newsList.value.filter(news => news.id !== id)
+        
+        // Actualizar paginación
+        if (pagination.value.total > 0) {
+          pagination.value.total -= 1
+        }
+        
         return { success: true, message: 'Noticia aprobada y publicada' }
       }
 
@@ -371,8 +391,15 @@ export const useNewsStore = defineStore('news', () => {
       const response = await newsService.rejectNews(id, data)
 
       if (response.success) {
-        // Marcar que se necesita recarga
-        markNeedsRefresh()
+        // Eliminar de la lista local ya que el usuario no debe verlo más
+        // (vuelve al creador como rechazada)
+        newsList.value = newsList.value.filter(news => news.id !== id)
+        
+        // Actualizar paginación
+        if (pagination.value.total > 0) {
+          pagination.value.total -= 1
+        }
+        
         return { success: true, message: 'Noticia rechazada' }
       }
 
