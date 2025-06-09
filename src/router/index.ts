@@ -106,6 +106,67 @@ const router = createRouter({
       component: () => import('@/views/news/NewsFormView.vue'),
       meta: { requiresAuth: true },
     },
+    // Rutas de gestión de usuarios - Solo admins según los endpoints especificados
+    {
+      path: '/admin/usuarios',
+      name: 'usuarios',
+      component: () => import('@/views/users/UserListView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden ver usuarios según los endpoints GET /users
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
+    {
+      path: '/admin/usuarios/nuevo',
+      name: 'usuario-nuevo',
+      component: () => import('@/views/users/UserEditView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden crear usuarios según los endpoints POST /users
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
+    {
+      path: '/admin/usuarios/:id',
+      name: 'usuario-detalle',
+      component: () => import('@/views/users/UserDetailView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden ver usuario específico según los endpoints GET /users/:id
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
+    {
+      path: '/admin/usuarios/:id/editar',
+      name: 'usuario-editar',
+      component: () => import('@/views/users/UserEditView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden modificar usuarios según los endpoints PUT /users/:id
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
   ],
 })
 

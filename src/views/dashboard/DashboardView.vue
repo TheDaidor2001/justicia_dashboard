@@ -229,11 +229,11 @@ const dashboardLinks = computed(() => {
         {
           id: 'usuarios',
           title: 'Usuarios',
-          description: 'Gestionar usuarios',
+          description: 'Gestionar usuarios del sistema',
           icon: 'pi-users',
           color: 'green',
-          route: '/usuarios',
-          available: false,
+          route: '/admin/usuarios',
+          available: true,
         },
         {
           id: 'administracion',

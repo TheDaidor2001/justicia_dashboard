@@ -70,7 +70,23 @@ export const API_ENDPOINTS = {
   AUDIT_STATS: '/audit/statistics',
 
   // Usuarios
+  USERS: '/users',
+  USER_DETAIL: (id: string) => `/users/${id}`,
+  USER_CREATE: '/users',
+  USER_UPDATE: (id: string) => `/users/${id}`,
+  USER_DELETE: (id: string) => `/users/${id}`,
+  USER_TOGGLE_STATUS: (id: string) => `/users/${id}/toggle-status`,
   USERS_ASSIGNABLE: '/users/assignable',
+  USER_ACTIVITIES: (id: string) => `/users/${id}/activities`,
+  USER_STATS: (id: string) => `/users/${id}/stats`,
+  USER_RESET_PASSWORD: (id: string) => `/users/${id}/reset-password`,
+  USER_PERMISSIONS: (id: string) => `/users/${id}/permissions`,
+  USER_PHOTO: (id: string) => `/users/${id}/photo`,
+  USERS_EXPORT: '/users/export',
+  USER_CONSTRAINTS: (id: string) => `/users/${id}/constraints`,
+  USER_REASSIGN_TASKS: (id: string) => `/users/${id}/reassign-tasks`,
+  USERS_SEARCH: '/users/search',
+  USER_WORKLOAD: (id: string) => `/users/${id}/workload`,
 
   // Departamentos
   DEPARTMENTS_PUBLIC: '/departments/public',
