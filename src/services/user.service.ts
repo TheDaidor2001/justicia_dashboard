@@ -1,32 +1,31 @@
 import { api } from '@/api/axios'
-import type { 
-  User, 
-  UserFilters, 
-  Pagination, 
+import type {
+  User,
+  UserFilters,
+  Pagination,
   UserListResponse,
-  UserActivity,
-  UserStats,
   CreateUserRequest,
   UpdateUserRequest,
   ExportOptions,
-  Department
+  Department,
 } from '@/types/user'
 
 export const userService = {
   async getUsers(filters: UserFilters = {}, pagination: Pagination): Promise<UserListResponse> {
     const params = new URLSearchParams()
-    
+
     // Agregar filtros
     if (filters.search) params.append('search', filters.search)
     if (filters.departamento_id) params.append('departamento_id', filters.departamento_id)
     if (filters.rol) params.append('rol', filters.rol)
     if (filters.estado) params.append('estado', filters.estado)
-    if (filters.es_asignable !== undefined) params.append('es_asignable', filters.es_asignable.toString())
-    
+    if (filters.es_asignable !== undefined)
+      params.append('es_asignable', filters.es_asignable.toString())
+
     // Agregar paginación
     params.append('page', pagination.page.toString())
     params.append('limit', pagination.limit.toString())
-    
+
     const response = await api.get(`/users?${params.toString()}`)
     return response.data
   },
@@ -46,8 +45,10 @@ export const userService = {
     return response.data
   },
 
-  async toggleUserStatus(id: string): Promise<User> {
-    const response = await api.patch(`/users/${id}/toggle-status`)
+  async toggleUserStatus(id: string, currentStatus: boolean): Promise<User> {
+    const response = await api.put(`/users/${id}`, {
+      isActive: !currentStatus,
+    })
     return response.data
   },
 
@@ -58,7 +59,7 @@ export const userService = {
   async getAssignableUsers(forModule?: string): Promise<User[]> {
     const params = new URLSearchParams()
     if (forModule) params.append('for_module', forModule)
-    
+
     const response = await api.get(`/users/assignable?${params.toString()}`)
     return response.data
   },
@@ -68,33 +69,25 @@ export const userService = {
     return response.data
   },
 
-  async getUserActivities(userId: string, limit = 20): Promise<UserActivity[]> {
-    const response = await api.get(`/users/${userId}/activities?limit=${limit}`)
-    return response.data
-  },
-
-  async getUserStats(userId: string): Promise<UserStats> {
-    const response = await api.get(`/users/${userId}/stats`)
-    return response.data
-  },
-
   async resetPassword(userId: string): Promise<void> {
     await api.post(`/users/${userId}/reset-password`)
   },
 
   async updateUserPermissions(userId: string, permissions: string[]): Promise<User> {
-    const response = await api.put(`/users/${userId}/permissions`, { permisos_especiales: permissions })
+    const response = await api.put(`/users/${userId}/permissions`, {
+      permisos_especiales: permissions,
+    })
     return response.data
   },
 
   async uploadUserPhoto(userId: string, file: File): Promise<User> {
     const formData = new FormData()
     formData.append('photo', file)
-    
+
     const response = await api.post(`/users/${userId}/photo`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        'Content-Type': 'multipart/form-data',
+      },
     })
     return response.data
   },
@@ -107,25 +100,26 @@ export const userService = {
   async exportUsers(options: ExportOptions): Promise<Blob> {
     const params = new URLSearchParams()
     params.append('format', options.format)
-    
+
     if (options.filters) {
       if (options.filters.search) params.append('search', options.filters.search)
-      if (options.filters.departamento_id) params.append('departamento_id', options.filters.departamento_id)
+      if (options.filters.departamento_id)
+        params.append('departamento_id', options.filters.departamento_id)
       if (options.filters.rol) params.append('rol', options.filters.rol)
       if (options.filters.estado) params.append('estado', options.filters.estado)
       if (options.filters.es_asignable !== undefined) {
         params.append('es_asignable', options.filters.es_asignable.toString())
       }
     }
-    
+
     if (options.columns) {
       params.append('columns', options.columns.join(','))
     }
-    
+
     const response = await api.get(`/users/export?${params.toString()}`, {
-      responseType: 'blob'
+      responseType: 'blob',
     })
-    
+
     return response.data
   },
 
@@ -141,17 +135,21 @@ export const userService = {
     return response.data
   },
 
-  async reassignUserTasks(userId: string, targetUserId: string, taskTypes: string[]): Promise<void> {
+  async reassignUserTasks(
+    userId: string,
+    targetUserId: string,
+    taskTypes: string[],
+  ): Promise<void> {
     await api.post(`/users/${userId}/reassign-tasks`, {
       target_user_id: targetUserId,
-      task_types: taskTypes
+      task_types: taskTypes,
     })
   },
 
   async searchUsers(query: string, filters?: Partial<UserFilters>): Promise<User[]> {
     const params = new URLSearchParams()
     params.append('q', query)
-    
+
     if (filters) {
       if (filters.departamento_id) params.append('departamento_id', filters.departamento_id)
       if (filters.rol) params.append('rol', filters.rol)
@@ -160,7 +158,7 @@ export const userService = {
         params.append('es_asignable', filters.es_asignable.toString())
       }
     }
-    
+
     const response = await api.get(`/users/search?${params.toString()}`)
     return response.data
   },
@@ -174,5 +172,5 @@ export const userService = {
   }> {
     const response = await api.get(`/users/${userId}/workload`)
     return response.data
-  }
+  },
 }

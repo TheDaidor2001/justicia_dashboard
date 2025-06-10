@@ -1,10 +1,6 @@
 <template>
   <div class="flex items-center gap-2">
-    <InputSwitch
-      v-model="localStatus"
-      :disabled="loading"
-      @change="handleStatusChange"
-    />
+    <ToggleSwitch v-model="localStatus" :disabled="loading" @change="handleStatusChange" />
     <span v-if="showLabel" class="text-sm" :class="statusTextClass">
       {{ statusLabel }}
     </span>
@@ -13,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import InputSwitch from 'primevue/inputswitch'
+import ToggleSwitch from 'primevue/toggleswitch'
 
 interface Props {
   userId: string
@@ -27,7 +23,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showLabel: true
+  showLabel: true,
 })
 
 const emit = defineEmits<Emits>()
@@ -53,6 +49,6 @@ watch(
   () => props.initialStatus,
   (newStatus) => {
     localStatus.value = newStatus === 'activo'
-  }
+  },
 )
 </script>

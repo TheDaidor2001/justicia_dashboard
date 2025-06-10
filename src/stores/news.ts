@@ -159,12 +159,12 @@ export const useNewsStore = defineStore('news', () => {
 
     try {
       const finalFilters = { ...filters.value, ...customFilters }
-      
+
       // Agregar timestamp para forzar recarga si es necesario
       if (forceRefresh) {
         finalFilters._t = now
       }
-      
+
       const response = await newsService.getNews(finalFilters)
 
       if (response.success) {
@@ -306,13 +306,13 @@ export const useNewsStore = defineStore('news', () => {
 
       if (response.success) {
         // Eliminar de la lista local ya que el usuario no debe verlo más
-        newsList.value = newsList.value.filter(news => news.id !== id)
-        
+        newsList.value = newsList.value.filter((news) => news.id !== id)
+
         // Actualizar paginación
         if (pagination.value.total > 0) {
           pagination.value.total -= 1
         }
-        
+
         return { success: true, message: 'Noticia enviada al director' }
       }
 
@@ -335,13 +335,13 @@ export const useNewsStore = defineStore('news', () => {
       if (response.success) {
         // Eliminar de la lista local ya que el director no debe verlo más
         // (va al presidente o se publica directamente)
-        newsList.value = newsList.value.filter(news => news.id !== id)
-        
+        newsList.value = newsList.value.filter((news) => news.id !== id)
+
         // Actualizar paginación
         if (pagination.value.total > 0) {
           pagination.value.total -= 1
         }
-        
+
         return { success: true, message: 'Noticia aprobada por director' }
       }
 
@@ -364,13 +364,13 @@ export const useNewsStore = defineStore('news', () => {
       if (response.success) {
         // Eliminar de la lista local ya que el presidente no debe verlo más
         // (se publica y ya no está pendiente)
-        newsList.value = newsList.value.filter(news => news.id !== id)
-        
+        newsList.value = newsList.value.filter((news) => news.id !== id)
+
         // Actualizar paginación
         if (pagination.value.total > 0) {
           pagination.value.total -= 1
         }
-        
+
         return { success: true, message: 'Noticia aprobada y publicada' }
       }
 
@@ -393,13 +393,13 @@ export const useNewsStore = defineStore('news', () => {
       if (response.success) {
         // Eliminar de la lista local ya que el usuario no debe verlo más
         // (vuelve al creador como rechazada)
-        newsList.value = newsList.value.filter(news => news.id !== id)
-        
+        newsList.value = newsList.value.filter((news) => news.id !== id)
+
         // Actualizar paginación
         if (pagination.value.total > 0) {
           pagination.value.total -= 1
         }
-        
+
         return { success: true, message: 'Noticia rechazada' }
       }
 

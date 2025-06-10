@@ -596,7 +596,6 @@ const formatDate = (date: string) => {
                     </div>
                   </template>
                 </Card>
-
               </div>
             </div>
           </TabPanel>

@@ -14,15 +14,13 @@ export const useUsers = () => {
     currentUser,
     assignableUsers,
     departments,
-    userActivities,
-    userStats,
     filters,
     pagination,
     loading,
     error,
     activeUsers,
     adminUsers,
-    filteredUsers
+    filteredUsers,
   } = storeToRefs(userStore)
 
   // Permisos - Solo admins pueden gestionar usuarios según los endpoints especificados
@@ -59,10 +57,10 @@ export const useUsers = () => {
   const canToggleUserStatus = computed(() => (targetUser: User) => {
     // Solo admins pueden cambiar estado de usuarios
     if (userRole.value !== 'admin') return false
-    
+
     // No puede desactivarse a sí mismo
     if (user.value?.id === targetUser.id) return false
-    
+
     return true
   })
 
@@ -72,12 +70,12 @@ export const useUsers = () => {
       // Usar el servicio directamente en lugar del store
       const { userService } = await import('@/services/user.service')
       const constraints = await userService.checkUserConstraints(userId)
-      
+
       if (!constraints?.can_deactivate) {
         const warnings = constraints?.warnings || []
         throw new Error(warnings.join('. '))
       }
-      
+
       return constraints
     } catch (error) {
       throw error
@@ -113,39 +111,39 @@ export const useUsers = () => {
 
     return {
       isValid: Object.keys(errors).length === 0,
-      errors
+      errors,
     }
   }
 
   // Utilidades
   const getUserByRole = (role: UserRole) => {
-    return users.value.filter(user => user.rol === role)
+    return users.value.filter((user) => user.rol === role)
   }
 
   const getUsersByDepartment = (departmentId: string) => {
-    return users.value.filter(user => user.departamento_id === departmentId)
+    return users.value.filter((user) => user.departamento_id === departmentId)
   }
 
   const isUserAssignable = (user: User, forModule?: string) => {
     if (user.estado !== 'activo') return false
     if (!user.es_asignable) return false
-    
+
     // Validar carga de trabajo
     if (user.carga_trabajo && user.carga_trabajo >= 100) return false
-    
+
     // Validaciones específicas por módulo
     if (forModule === 'contactos') {
       return ['secretario_general', 'admin'].includes(user.rol)
     }
-    
+
     if (forModule === 'expedientes') {
       return ['juez', 'presidente_audiencia', 'admin'].includes(user.rol)
     }
-    
+
     if (forModule === 'noticias') {
       return ['director_prensa', 'tecnico_prensa', 'admin'].includes(user.rol)
     }
-    
+
     return true
   }
 
@@ -161,7 +159,7 @@ export const useUsers = () => {
       juez: 'Juez',
       presidente_audiencia: 'Presidente de Audiencia',
       director_prensa: 'Director de Prensa',
-      tecnico_prensa: 'Técnico de Prensa'
+      tecnico_prensa: 'Técnico de Prensa',
     }
     return labels[role] || role
   }
@@ -174,7 +172,7 @@ export const useUsers = () => {
       juez: 'success',
       presidente_audiencia: 'secondary',
       director_prensa: 'primary',
-      tecnico_prensa: 'contrast'
+      tecnico_prensa: 'contrast',
     }
     return colors[role] || 'secondary'
   }
@@ -182,7 +180,7 @@ export const useUsers = () => {
   // Búsqueda con debounce
   const searchUsers = async (query: string, searchFilters?: Partial<UserFilters>) => {
     if (query.length < 2) return []
-    
+
     try {
       const { userService } = await import('@/services/user.service')
       const results = await userService.searchUsers(query, searchFilters)
@@ -198,22 +196,19 @@ export const useUsers = () => {
   // Métodos de acción del store (las funciones se obtienen directamente del store)
   const {
     fetchUsers,
-    fetchUserById,
     createUser,
     updateUser,
     toggleUserStatus,
     deleteUser,
     fetchAssignableUsers,
     fetchDepartments,
-    fetchUserActivities,
-    fetchUserStats,
     resetPassword,
     exportUsers,
     setFilters,
     resetFilters,
     setPagination,
     clearError,
-    clearCurrentUser
+    clearCurrentUser,
   } = userStore
 
   return {
@@ -222,8 +217,6 @@ export const useUsers = () => {
     currentUser,
     assignableUsers,
     departments,
-    userActivities,
-    userStats,
     filters,
     pagination,
     loading,
@@ -257,21 +250,18 @@ export const useUsers = () => {
 
     // Acciones
     fetchUsers,
-    fetchUserById,
     createUser,
     updateUser,
     toggleUserStatus,
     deleteUser,
     fetchAssignableUsers,
     fetchDepartments,
-    fetchUserActivities,
-    fetchUserStats,
     resetPassword,
     exportUsers,
     setFilters,
     resetFilters,
     setPagination,
     clearError,
-    clearCurrentUser
+    clearCurrentUser,
   }
 }

@@ -39,7 +39,6 @@ export const useExpedientes = () => {
     }
     // Los admin ven todo sin filtros
 
-
     return filtered
   })
 

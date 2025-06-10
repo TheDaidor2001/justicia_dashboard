@@ -20,9 +20,11 @@ const router = useRouter()
         <i class="pi pi-chevron-right text-sm"></i>
         <span>Inicio</span>
       </div>
-      
+
       <h1 class="text-3xl font-bold text-gray-900">Página de Inicio</h1>
-      <p class="text-gray-600 mt-4">Bienvenido al Sistema de Gestión Judicial del Consejo Superior del Poder Judicial.</p>
+      <p class="text-gray-600 mt-4">
+        Bienvenido al Sistema de Gestión Judicial del Consejo Superior del Poder Judicial.
+      </p>
     </div>
   </main>
 </template>

@@ -241,7 +241,7 @@ const formatDate = (date: string) => {
         <i class="pi pi-chevron-right text-sm"></i>
         <span>Noticias Pendientes</span>
       </div>
-      
+
       <h1 class="text-3xl font-bold text-gray-900">{{ pageTitle }}</h1>
       <p class="text-gray-600 mt-2">{{ pageDescription }}</p>
     </div>

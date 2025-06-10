@@ -12,10 +12,12 @@
       <i class="pi pi-chevron-right text-sm"></i>
       <span>Acerca de</span>
     </div>
-    
+
     <div class="about">
       <h1 class="text-3xl font-bold text-gray-900">Acerca del Sistema</h1>
-      <p class="text-gray-600 mt-4">Sistema de Gestión Judicial - Consejo Superior del Poder Judicial</p>
+      <p class="text-gray-600 mt-4">
+        Sistema de Gestión Judicial - Consejo Superior del Poder Judicial
+      </p>
     </div>
   </div>
 </template>

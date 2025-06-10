@@ -289,7 +289,7 @@ export const useNews = () => {
     lastRefreshTime = now
     newsStore.fetchNews()
   }
-  
+
   // Función para forzar recarga sin importar el estado
   const forceRefreshNews = async () => {
     // Forzar recarga sin verificaciones usando el parámetro forceRefresh

@@ -12,14 +12,14 @@
       <i class="pi pi-chevron-right text-sm"></i>
       <span>Usuarios</span>
       <i class="pi pi-chevron-right text-sm"></i>
-      <span>Editar</span>
+      <span>Nuevo</span>
     </div>
 
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">Editar Usuario</h1>
-        <p class="text-gray-600 mt-1">Modificar información del usuario</p>
+        <h1 class="text-3xl font-bold text-gray-900">Nuevo Usuario</h1>
+        <p class="text-gray-600 mt-1">Crear un nuevo usuario del sistema</p>
       </div>
 
       <div class="flex gap-2">
@@ -34,8 +34,9 @@
           label="Guardar"
           icon="pi pi-save"
           :loading="loading"
+          :disabled="$v.$invalid"
           class="bg-blue-600 text-white hover:bg-blue-700"
-          @click="saveUser"
+          @click="createUser"
         />
       </div>
     </div>
@@ -43,31 +44,35 @@
     <!-- Formulario -->
     <Card>
       <template #content>
-        <form @submit.prevent="saveUser" class="space-y-6">
+        <form @submit.prevent="createUser" class="space-y-6">
           <!-- Información Personal -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
-              <label for="email" class="text-sm font-medium text-gray-700"> Email </label>
+              <label for="email" class="text-sm font-medium text-gray-700"> Email * </label>
               <InputText
                 id="email"
                 v-model="userForm.email"
-                disabled
+                :class="{ 'p-invalid': $v.email.$error }"
                 placeholder="correo@ejemplo.com"
                 class="w-full"
               />
-              <small class="text-gray-500">El email no puede modificarse</small>
+              <small v-if="$v.email.$error" class="text-red-500">
+                {{ $v.email.$errors[0]?.$message }}
+              </small>
             </div>
 
             <div class="space-y-2">
-              <label for="dni" class="text-sm font-medium text-gray-700"> DNI </label>
+              <label for="dni" class="text-sm font-medium text-gray-700"> DNI * </label>
               <InputText
                 id="dni"
                 v-model="userForm.dni"
-                disabled
-                placeholder="12345678"
+                :class="{ 'p-invalid': $v.dni.$error }"
+                placeholder="123456"
                 class="w-full"
               />
-              <small class="text-gray-500">El DNI no puede modificarse</small>
+              <small v-if="$v.dni.$error" class="text-red-500">
+                {{ $v.dni.$errors[0]?.$message }}
+              </small>
             </div>
 
             <div class="space-y-2">
@@ -77,10 +82,13 @@
               <InputText
                 id="nombre"
                 v-model="userForm.nombre"
+                :class="{ 'p-invalid': $v.nombre.$error }"
                 placeholder="Juan Pérez García"
                 class="w-full"
-                required
               />
+              <small v-if="$v.nombre.$error" class="text-red-500">
+                {{ $v.nombre.$errors[0]?.$message }}
+              </small>
             </div>
 
             <div class="space-y-2">
@@ -106,9 +114,13 @@
                 :options="roleOptions"
                 option-label="label"
                 option-value="value"
+                :class="{ 'p-invalid': $v.rol.$error }"
                 placeholder="Seleccionar rol"
                 class="w-full"
               />
+              <small v-if="$v.rol.$error" class="text-red-500">
+                {{ $v.rol.$errors[0]?.$message }}
+              </small>
             </div>
 
             <div v-if="requiresDepartment" class="space-y-2">
@@ -121,16 +133,57 @@
                 :options="departments"
                 optionLabel="name"
                 optionValue="id"
+                :class="{ 'p-invalid': $v.departamento_id.$error }"
                 placeholder="Seleccionar departamento"
                 class="w-full"
                 :loading="loadingDepartments"
               />
+              <small v-if="$v.departamento_id.$error" class="text-red-500">
+                {{ $v.departamento_id.$errors[0]?.$message }}
+              </small>
             </div>
             <div v-else class="space-y-2">
               <label class="text-sm font-medium text-gray-500"> Departamento </label>
               <p class="text-sm text-gray-400 italic">
                 Este rol no requiere departamento específico
               </p>
+            </div>
+          </div>
+
+          <!-- Contraseña -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="password" class="text-sm font-medium text-gray-700"> Contraseña * </label>
+              <Password
+                id="password"
+                v-model="userForm.password"
+                :class="{ 'p-invalid': $v.password.$error }"
+                placeholder="Contraseña"
+                toggle-mask
+                class="w-full"
+                :feedback="false"
+              />
+              <small v-if="$v.password.$error" class="text-red-500">
+                {{ $v.password.$errors[0]?.$message }}
+              </small>
+            </div>
+
+            <div class="space-y-2">
+              <label for="confirmPassword" class="text-sm font-medium text-gray-700">
+                Confirmar Contraseña *
+              </label>
+              <Password
+                id="confirmPassword"
+                v-model="userForm.confirmPassword"
+                :class="{ 'p-invalid': $v.confirmPassword.$error }"
+                placeholder="Confirmar contraseña"
+                toggle-mask
+                class="w-full"
+                :feedback="false"
+              />
+              <small v-if="$v.confirmPassword.$error" class="text-red-500">
+                {{ $v.confirmPassword.$errors[0]?.$message }}
+              </small>
             </div>
           </div>
         </form>
@@ -141,9 +194,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { useVuelidate } from '@vuelidate/core'
+import { required, email, minLength, sameAs, helpers } from '@vuelidate/validators'
 import { useUserStore } from '@/stores/users'
-import { userService } from '@/services/user.service'
 import { useToast } from 'primevue/usetoast'
 import type { UserRole } from '@/types/user'
 import { USER_ROLE_LABELS } from '@/types/user'
@@ -151,16 +205,15 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
+import Password from 'primevue/password'
 import Divider from 'primevue/divider'
 
 const router = useRouter()
-const route = useRoute()
 const userStore = useUserStore()
 const toast = useToast()
 
 const loading = ref(false)
 const loadingDepartments = ref(false)
-const userId = computed(() => route.params.id as string)
 
 const userForm = ref({
   email: '',
@@ -169,6 +222,8 @@ const userForm = ref({
   telefono: '',
   rol: '' as UserRole | '',
   departamento_id: '',
+  password: '',
+  confirmPassword: '',
 })
 
 const roleOptions = computed(() =>
@@ -196,6 +251,79 @@ watch(
   },
 )
 
+// Activar validaciones cuando los campos cambien
+watch(
+  () => userForm.value.email,
+  () => $v.value.email.$touch(),
+  { flush: 'post' },
+)
+watch(
+  () => userForm.value.dni,
+  () => $v.value.dni.$touch(),
+  { flush: 'post' },
+)
+watch(
+  () => userForm.value.nombre,
+  () => $v.value.nombre.$touch(),
+  { flush: 'post' },
+)
+watch(
+  () => userForm.value.rol,
+  () => $v.value.rol.$touch(),
+  { flush: 'post' },
+)
+watch(
+  () => userForm.value.departamento_id,
+  () => {
+    if ($v.value.departamento_id) {
+      $v.value.departamento_id.$touch()
+    }
+  },
+  { flush: 'post' },
+)
+watch(
+  () => userForm.value.password,
+  () => $v.value.password.$touch(),
+  { flush: 'post' },
+)
+watch(
+  () => userForm.value.confirmPassword,
+  () => $v.value.confirmPassword.$touch(),
+  { flush: 'post' },
+)
+
+const dniValidator = helpers.withMessage(
+  'El DNI debe tener mínimo 6 caracteres',
+  (value: string) => !value || value.length >= 6,
+)
+
+const validationRules = computed(() => {
+  const baseRules = {
+    email: { required, email },
+    dni: { required, dniValidator },
+    nombre: { required, minLength: minLength(3) },
+    telefono: {},
+    rol: { required },
+    password: { required, minLength: minLength(8) },
+    confirmPassword: {
+      required,
+      sameAs: sameAs(
+        computed(() => userForm.value.password),
+        'contraseña',
+      ),
+    },
+  }
+
+  // Solo agregar validación de departamento si es requerido
+  if (requiresDepartment.value) {
+    baseRules.departamento_id = { required }
+  }
+
+  return baseRules
+})
+
+const $v = useVuelidate(validationRules, userForm)
+
 const departments = computed(() => {
   return (
     userStore.departments?.map((dept) => ({
@@ -205,36 +333,6 @@ const departments = computed(() => {
     })) || []
   )
 })
-
-const loadUser = async () => {
-  try {
-    loading.value = true
-    const user = await userService.getUserById(userId.value)
-
-    // Poblar el formulario con los datos del usuario
-    const userData = user.data || user.user || user
-
-    userForm.value.email = userData.email || userData.correo || ''
-    userForm.value.dni = userData.dni || userData.document || userData.documento || ''
-    userForm.value.nombre =
-      userData.nombre || userData.name || userData.fullName || userData.full_name || ''
-    userForm.value.telefono = userData.telefono || userData.phone || userData.celular || ''
-    userForm.value.rol = userData.rol || userData.role || userData.userRole || ''
-    userForm.value.departamento_id =
-      userData.departamento_id || userData.department_id || userData.departmentId || ''
-  } catch (error: any) {
-    console.error('Error al cargar usuario:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Error al cargar usuario',
-      life: 3000,
-    })
-    goBack()
-  } finally {
-    loading.value = false
-  }
-}
 
 const loadDepartments = async () => {
   try {
@@ -256,32 +354,47 @@ const goBack = () => {
   router.push('/admin/usuarios')
 }
 
-const saveUser = async () => {
+const createUser = async () => {
+  const isValid = await $v.value.$validate()
+
+  if (!isValid) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Formulario incompleto',
+      detail: 'Por favor complete todos los campos requeridos',
+      life: 3000,
+    })
+    return
+  }
+
   loading.value = true
   try {
-    const updateData = {
+    const createData = {
+      email: userForm.value.email,
+      dni: userForm.value.dni,
       fullName: userForm.value.nombre,
       phone: userForm.value.telefono || undefined,
       role: userForm.value.rol as UserRole,
       departmentId: userForm.value.departamento_id,
+      password: userForm.value.password,
     }
 
-    await userStore.updateUser(userId.value, updateData)
+    await userStore.createUser(createData)
 
     toast.add({
       severity: 'success',
-      summary: 'Usuario actualizado',
-      detail: 'Los datos del usuario se han actualizado correctamente',
+      summary: 'Usuario creado',
+      detail: 'El usuario se ha creado correctamente',
       life: 3000,
     })
 
     goBack()
   } catch (error: any) {
-    console.error('Error al actualizar usuario:', error)
+    console.error('Error al crear usuario:', error)
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: error.message || 'Error al actualizar usuario',
+      detail: error.message || 'Error al crear usuario',
       life: 3000,
     })
   } finally {
@@ -291,7 +404,7 @@ const saveUser = async () => {
 
 onMounted(async () => {
   try {
-    await Promise.all([loadDepartments(), loadUser()])
+    await loadDepartments()
   } catch (error) {
     console.error('Error en onMounted:', error)
   }

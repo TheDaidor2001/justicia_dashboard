@@ -11,7 +11,7 @@
             size="large"
             shape="circle"
           />
-          
+
           <!-- Indicador de estado -->
           <div
             :class="statusIndicatorClass"
@@ -23,18 +23,13 @@
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
             <h3 class="font-medium text-gray-900 truncate">{{ user.nombre }}</h3>
-            
+
             <!-- Badge de rol -->
-            <UserRoleBadge 
-              :role="user.rol" 
-              :user-id="user.id"
-              size="small"
-              :show-tooltip="false"
-            />
+            <UserRoleBadge :role="user.rol" :user-id="user.id" size="small" :show-tooltip="false" />
           </div>
-          
+
           <p class="text-sm text-gray-600 truncate mb-1">{{ user.email }}</p>
-          
+
           <div class="flex items-center gap-2 text-xs text-gray-500">
             <i class="pi pi-building"></i>
             <span class="truncate">{{ departmentName }}</span>
@@ -44,26 +39,32 @@
         <!-- Indicadores adicionales -->
         <div v-if="showIndicators" class="flex-shrink-0 flex flex-col items-center gap-1">
           <!-- Usuario asignable -->
-          <div v-if="user.es_asignable" class="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full">
+          <div
+            v-if="user.es_asignable"
+            class="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full"
+          >
             <i class="pi pi-check text-xs text-green-600"></i>
           </div>
-          
+
           <!-- Carga de trabajo -->
           <div v-if="showWorkload && user.carga_trabajo !== undefined" class="text-center">
             <div class="text-xs font-medium" :class="workloadColorClass">
               {{ user.carga_trabajo }}%
             </div>
             <div class="w-8 h-1 bg-gray-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 class="h-full transition-all duration-300"
                 :class="workloadBarClass"
                 :style="{ width: `${Math.min(user.carga_trabajo, 100)}%` }"
               ></div>
             </div>
           </div>
-          
+
           <!-- Tareas pendientes -->
-          <div v-if="user.tareas_pendientes && user.tareas_pendientes > 0" class="flex items-center justify-center w-6 h-6 bg-orange-100 rounded-full">
+          <div
+            v-if="user.tareas_pendientes && user.tareas_pendientes > 0"
+            class="flex items-center justify-center w-6 h-6 bg-orange-100 rounded-full"
+          >
             <span class="text-xs font-medium text-orange-600">{{ user.tareas_pendientes }}</span>
           </div>
         </div>
@@ -76,23 +77,23 @@
             <span class="text-gray-500">DNI:</span>
             <span class="ml-2 font-medium">{{ user.dni }}</span>
           </div>
-          
+
           <div v-if="user.telefono">
             <span class="text-gray-500">Teléfono:</span>
             <span class="ml-2 font-medium">{{ user.telefono }}</span>
           </div>
-          
+
           <div>
             <span class="text-gray-500">Estado:</span>
             <span class="ml-2" :class="statusTextClass">{{ user.estado }}</span>
           </div>
-          
+
           <div v-if="user.ultima_actividad">
             <span class="text-gray-500">Última actividad:</span>
             <span class="ml-2 font-medium">{{ formatLastActivity }}</span>
           </div>
         </div>
-        
+
         <!-- Acciones rápidas -->
         <div v-if="showActions" class="flex gap-2 mt-3">
           <Button
@@ -146,7 +147,7 @@ const props = withDefaults(defineProps<Props>(), {
   showIndicators: true,
   showWorkload: true,
   showActions: false,
-  clickable: false
+  clickable: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -155,7 +156,7 @@ const { canEditUser, departments } = useUsers()
 
 const avatarLabel = computed(() => {
   const names = props.user.nombre.split(' ')
-  return names.length > 1 
+  return names.length > 1
     ? `${names[0][0]}${names[1][0]}`.toUpperCase()
     : names[0].substring(0, 2).toUpperCase()
 })
@@ -179,7 +180,7 @@ const statusTextClass = computed(() => {
 
 const workloadColorClass = computed(() => {
   if (!props.user.carga_trabajo) return 'text-gray-500'
-  
+
   if (props.user.carga_trabajo >= 90) return 'text-red-600'
   if (props.user.carga_trabajo >= 70) return 'text-orange-600'
   return 'text-green-600'
@@ -187,7 +188,7 @@ const workloadColorClass = computed(() => {
 
 const workloadBarClass = computed(() => {
   if (!props.user.carga_trabajo) return 'bg-gray-300'
-  
+
   if (props.user.carga_trabajo >= 90) return 'bg-red-500'
   if (props.user.carga_trabajo >= 70) return 'bg-orange-500'
   return 'bg-green-500'
@@ -195,20 +196,20 @@ const workloadBarClass = computed(() => {
 
 const formatLastActivity = computed(() => {
   if (!props.user.ultima_actividad) return 'Nunca'
-  
+
   const date = new Date(props.user.ultima_actividad)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  
+
   if (diffDays === 0) return 'Hoy'
   if (diffDays === 1) return 'Ayer'
   if (diffDays < 7) return `Hace ${diffDays} días`
-  
+
   return date.toLocaleDateString('es-ES', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
   })
 })
 

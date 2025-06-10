@@ -221,14 +221,14 @@ const onImageError = (message: string) => {
 const autoSaveDraft = async () => {
   // No auto-guardar si ya se está enviando o navegando
   if (submitting.value || hasNavigated.value) return
-  
+
   if (!formData.value.title || formData.value.title.length < 5) return
 
   try {
     if (!isEditMode.value) {
       // Solo auto-guardar si hay contenido mínimo y no se está enviando
       if (submitting.value) return
-      
+
       const createData: CreateNewsDto = {
         title: formData.value.title,
         subtitle: formData.value.subtitle,
@@ -256,7 +256,7 @@ const scheduleAutoSave = () => {
   if (autoSaveTimer.value) {
     clearTimeout(autoSaveTimer.value)
   }
-  
+
   // Solo programar auto-guardado si no se está enviando manualmente
   if (!submitting.value && !hasNavigated.value) {
     autoSaveTimer.value = setTimeout(autoSaveDraft, 3000) // 3 segundos después de parar de escribir
@@ -275,7 +275,7 @@ const saveDraft = async () => {
   if (submitDebounceTimer) {
     clearTimeout(submitDebounceTimer)
   }
-  
+
   // Limpiar auto-guardado para evitar conflictos
   if (autoSaveTimer.value) {
     clearTimeout(autoSaveTimer.value)
@@ -295,7 +295,7 @@ const submitForReview = async () => {
   if (submitDebounceTimer) {
     clearTimeout(submitDebounceTimer)
   }
-  
+
   // Limpiar auto-guardado para evitar conflictos
   if (autoSaveTimer.value) {
     clearTimeout(autoSaveTimer.value)
@@ -469,12 +469,7 @@ onUnmounted(() => {
           v-tooltip.top="'Volver al Dashboard'"
         />
         <i class="pi pi-chevron-right text-sm"></i>
-        <Button
-          icon="pi pi-arrow-left"
-          severity="contrast"
-          text
-          @click="handleCancel"
-        />
+        <Button icon="pi pi-arrow-left" severity="contrast" text @click="handleCancel" />
         <span>Volver a noticias</span>
       </div>
       <h1 class="text-3xl font-bold text-gray-900">
@@ -487,10 +482,18 @@ onUnmounted(() => {
       </h1>
       <p class="text-gray-600 mt-2">
         <template v-if="isEditMode">
-          {{ isCourtSubmission ? 'Modifica los datos del aviso o comunicado' : 'Modifica los datos de la noticia' }}
+          {{
+            isCourtSubmission
+              ? 'Modifica los datos del aviso o comunicado'
+              : 'Modifica los datos de la noticia'
+          }}
         </template>
         <template v-else>
-          {{ isCourtSubmission ? 'Completa el formulario para crear un nuevo aviso o comunicado que será enviado al Director de Prensa para su revisión' : 'Completa el formulario para crear una nueva publicación' }}
+          {{
+            isCourtSubmission
+              ? 'Completa el formulario para crear un nuevo aviso o comunicado que será enviado al Director de Prensa para su revisión'
+              : 'Completa el formulario para crear una nueva publicación'
+          }}
         </template>
       </p>
     </div>

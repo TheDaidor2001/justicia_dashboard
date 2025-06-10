@@ -4,6 +4,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useRouter } from 'vue-router'
 import { useExpedientesStore } from '@/stores/expedientes'
 import { useNewsStore } from '@/stores/news'
+import { useBooksStore } from '@/stores/books'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Avatar from 'primevue/avatar'
@@ -15,6 +16,7 @@ const router = useRouter()
 const toast = useToast()
 const expedientesStore = useExpedientesStore()
 const newsStore = useNewsStore()
+const booksStore = useBooksStore()
 
 // Estado
 const currentTime = ref(new Date())
@@ -24,6 +26,7 @@ const stats = ref({
   expedientesPendientes: 0,
   noticiasTotal: 0,
   noticiasPendientes: 0,
+  librosTotal: 0,
 })
 
 // Saludo según la hora del día
@@ -236,6 +239,16 @@ const dashboardLinks = computed(() => {
           available: true,
         },
         {
+          id: 'biblioteca',
+          title: 'Biblioteca Digital',
+          description: 'Gestionar libros y documentos',
+          icon: 'pi-book',
+          color: 'indigo',
+          route: '/admin/libros',
+          available: true,
+          stats: stats.value.librosTotal,
+        },
+        {
           id: 'administracion',
           title: 'Administración',
           description: 'Configuración del sistema',
@@ -249,26 +262,15 @@ const dashboardLinks = computed(() => {
   }
 
   // Agregar enlaces comunes al final
-  links.push(
-    {
-      id: 'biblioteca',
-      title: 'Biblioteca',
-      description: 'Documentos y recursos legales',
-      icon: 'pi-book',
-      color: 'indigo',
-      route: '/biblioteca',
-      available: false,
-    },
-    {
-      id: 'ayuda',
-      title: 'Ayuda',
-      description: 'Soporte y documentación',
-      icon: 'pi-question-circle',
-      color: 'teal',
-      route: '/ayuda',
-      available: false,
-    },
-  )
+  links.push({
+    id: 'ayuda',
+    title: 'Ayuda',
+    description: 'Soporte y documentación',
+    icon: 'pi-question-circle',
+    color: 'teal',
+    route: '/ayuda',
+    available: true,
+  })
 
   return links
 })
@@ -297,6 +299,18 @@ const loadStats = async () => {
         stats.value.noticiasPendientes =
           (newsStore.statistics.byStatus?.pending_director || 0) +
           (newsStore.statistics.byStatus?.pending_president || 0)
+      }
+    }
+
+    // Cargar estadísticas de libros (solo para admins)
+    if (userRole.value === 'admin') {
+      try {
+        const booksResult = await booksStore.fetchBookStats()
+        if (booksResult) {
+          stats.value.librosTotal = booksResult.total || 0
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas de libros:', error)
       }
     }
   } catch (error) {
@@ -391,15 +405,27 @@ onActivated(() => {
           <!-- Usuario y logout -->
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-3">
-              <Avatar :label="userInitials" shape="circle" class="bg-gray-200 text-gray-700" size="normal" />
+              <Avatar
+                :label="userInitials"
+                shape="circle"
+                class="bg-gray-200 text-gray-700"
+                size="normal"
+              />
               <div class="hidden sm:block text-right">
                 <p class="text-sm font-medium text-gray-900">{{ userName }}</p>
                 <p class="text-xs text-gray-500 capitalize">{{ userRole?.replace('_', ' ') }}</p>
               </div>
             </div>
 
-            <Button icon="pi pi-sign-out" severity="secondary" class="text-white" text rounded
-              v-tooltip.bottom="'Cerrar sesión'" @click="handleLogout" />
+            <Button
+              icon="pi pi-sign-out"
+              severity="secondary"
+              class="text-white"
+              text
+              rounded
+              v-tooltip.bottom="'Cerrar sesión'"
+              @click="handleLogout"
+            />
           </div>
         </div>
       </div>
@@ -426,13 +452,18 @@ onActivated(() => {
 
       <!-- Grid de enlaces -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <div v-for="link in dashboardLinks" :key="link.id" @click="navigateTo(link)"
+        <div
+          v-for="link in dashboardLinks"
+          :key="link.id"
+          @click="navigateTo(link)"
           class="group relative rounded-xl p-6 transition-all duration-200 cursor-pointer"
-          :class="[getBgColor(link.color), link.available ? '' : 'opacity-60']">
+          :class="[getBgColor(link.color), link.available ? '' : 'opacity-60']"
+        >
           <!-- Badge de estado -->
           <div v-if="link.badge" class="absolute top-4 right-4">
             <span
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+            >
               {{ link.badge }}
             </span>
           </div>
@@ -440,7 +471,8 @@ onActivated(() => {
           <!-- Icono -->
           <div class="mb-4">
             <div
-              class="w-12 h-12 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+              class="w-12 h-12 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform"
+            >
               <i :class="[link.icon, 'pi', 'text-xl', getIconColor(link.color)]"></i>
             </div>
           </div>
@@ -462,8 +494,15 @@ onActivated(() => {
 
           <!-- Indicador de disponibilidad -->
           <div class="absolute bottom-4 right-4">
-            <i v-if="!link.available" class="pi pi-lock text-gray-400" v-tooltip.top="'Próximamente'"></i>
-            <i v-else class="pi pi-arrow-right text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+            <i
+              v-if="!link.available"
+              class="pi pi-lock text-gray-400"
+              v-tooltip.top="'Próximamente'"
+            ></i>
+            <i
+              v-else
+              class="pi pi-arrow-right text-gray-400 group-hover:translate-x-1 transition-transform"
+            ></i>
           </div>
         </div>
       </div>

@@ -202,12 +202,7 @@ const getErrorMessage = (field: string) => {
           v-tooltip.top="'Volver al Dashboard'"
         />
         <i class="pi pi-chevron-right text-sm"></i>
-        <Button
-          icon="pi pi-arrow-left"
-          severity="contrast"
-          text
-          @click="handleCancel"
-        />
+        <Button icon="pi pi-arrow-left" severity="contrast" text @click="handleCancel" />
         <span>Volver a expedientes</span>
       </div>
       <h1 class="text-3xl font-bold text-gray-900">

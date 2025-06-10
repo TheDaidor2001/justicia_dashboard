@@ -1,9 +1,5 @@
 <template>
-  <Tag 
-    :value="roleLabel" 
-    :severity="roleSeverity"
-    class="text-xs"
-  />
+  <Tag :value="roleLabel" :severity="roleSeverity" class="text-xs" />
 </template>
 
 <script setup lang="ts">

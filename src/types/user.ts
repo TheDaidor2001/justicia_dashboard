@@ -19,7 +19,7 @@ export interface User {
   contactos_asignados?: number
 }
 
-export type UserRole = 
+export type UserRole =
   | 'admin'
   | 'presidente_cspj'
   | 'secretario_general'
@@ -48,26 +48,6 @@ export interface UserFilters {
   es_asignable?: boolean
 }
 
-export interface UserActivity {
-  id: string
-  usuario_id: string
-  accion: string
-  descripcion: string
-  fecha: string
-  ip?: string
-  detalles?: Record<string, any>
-  modulo: string
-}
-
-export interface UserStats {
-  expedientes_creados?: number
-  expedientes_aprobados?: number
-  expedientes_rechazados?: number
-  noticias_publicadas?: number
-  contactos_gestionados?: number
-  total_acciones?: number
-}
-
 export interface UserPermission {
   id: string
   codigo: string
@@ -89,6 +69,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   nombre?: string
   telefono?: string
+  rol?: UserRole
   departamento_id?: string
   permisos_especiales?: string[]
 }
@@ -124,7 +105,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   juez: 'Juez',
   presidente_audiencia: 'Presidente de Audiencia',
   director_prensa: 'Director de Prensa',
-  tecnico_prensa: 'Técnico de Prensa'
+  tecnico_prensa: 'Técnico de Prensa',
 }
 
 export const USER_ROLE_COLORS: Record<UserRole, string> = {
@@ -134,7 +115,7 @@ export const USER_ROLE_COLORS: Record<UserRole, string> = {
   juez: 'success',
   presidente_audiencia: 'secondary',
   director_prensa: 'primary',
-  tecnico_prensa: 'contrast'
+  tecnico_prensa: 'contrast',
 }
 
 export const USER_PERMISSIONS: Record<UserRole, string[]> = {
@@ -144,5 +125,5 @@ export const USER_PERMISSIONS: Record<UserRole, string[]> = {
   juez: ['expedientes.*', 'dashboard.view', 'profile.edit'],
   presidente_audiencia: ['expedientes.*', 'dashboard.view', 'profile.edit'],
   director_prensa: ['noticias.*', 'dashboard.view', 'profile.edit'],
-  tecnico_prensa: ['noticias.create', 'noticias.edit', 'dashboard.view', 'profile.edit']
+  tecnico_prensa: ['noticias.create', 'noticias.edit', 'dashboard.view', 'profile.edit'],
 }

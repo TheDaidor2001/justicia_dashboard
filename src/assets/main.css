@@ -41,23 +41,23 @@
   --p-green-500: #22c55e;
   --p-green-600: #16a34a;
   --p-green-contrast-color: #ffffff;
-  
+
   --p-red-500: #ef4444;
   --p-red-600: #dc2626;
   --p-red-contrast-color: #ffffff;
-  
+
   --p-blue-500: #3b82f6;
   --p-blue-600: #2563eb;
   --p-blue-contrast-color: #ffffff;
-  
+
   --p-yellow-500: #eab308;
   --p-yellow-600: #ca8a04;
   --p-yellow-contrast-color: #ffffff;
-  
+
   --p-gray-500: #6b7280;
   --p-gray-600: #4b5563;
   --p-gray-contrast-color: #ffffff;
-  
+
   --p-slate-900: #0f172a;
   --p-slate-800: #1e293b;
   --p-slate-contrast-color: #ffffff;
@@ -75,128 +75,233 @@
 
 /* Estilos personalizados para iconos blancos en botones primary */
 /* Botones primary sin severity especificado o con severity="primary" */
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  ),
 .p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) {
   color: white !important;
 }
 
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  *,
 .p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) * {
   color: white !important;
 }
 
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  .p-button-icon,
 .p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
   color: white !important;
 }
 
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
-.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  i[class*='pi-'],
+.p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) i[class*='pi-'] {
   color: white !important;
 }
 
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-label,
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  .p-button-label,
 .p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) .p-button-label {
   color: white !important;
 }
 
 /* Iconos blancos en spinner de carga para botones primary */
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .pi-spinner,
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  .pi-spinner,
 .p-button.p-button-primary:not(.p-button-outlined):not(.p-button-text) .pi-spinner {
   color: white !important;
 }
 
 /* Asegurar que los iconos sean blancos en botones primary cuando están deshabilitados */
-.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  ),
 .p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) {
   color: white !important;
   opacity: 0.7;
 }
 
-.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  *,
 .p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) * {
   color: white !important;
   opacity: 0.7;
 }
 
-.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  .p-button-icon,
 .p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
   color: white !important;
   opacity: 0.7;
 }
 
-.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
-.p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+.p-button:disabled:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  i[class*='pi-'],
+.p-button.p-button-primary:disabled:not(.p-button-outlined):not(.p-button-text) i[class*='pi-'] {
   color: white !important;
   opacity: 0.7;
 }
 
 /* Iconos blancos en estado hover para botones primary */
-.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  ),
 .p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) {
   color: white !important;
 }
 
-.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  *,
 .p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) * {
   color: white !important;
 }
 
-.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  .p-button-icon,
 .p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
   color: white !important;
 }
 
-.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
-.p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+.p-button:hover:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  i[class*='pi-'],
+.p-button.p-button-primary:hover:not(.p-button-outlined):not(.p-button-text) i[class*='pi-'] {
   color: white !important;
 }
 
 /* Iconos blancos en estado focus para botones primary */
-.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  ),
 .p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) {
   color: white !important;
 }
 
-.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  *,
 .p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) * {
   color: white !important;
 }
 
-.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  .p-button-icon,
 .p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
   color: white !important;
 }
 
-.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
-.p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+.p-button:focus:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  i[class*='pi-'],
+.p-button.p-button-primary:focus:not(.p-button-outlined):not(.p-button-text) i[class*='pi-'] {
   color: white !important;
 }
 
 /* Iconos blancos en estado active/pressed para botones primary */
-.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast),
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  ),
 .p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) {
   color: white !important;
 }
 
-.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) *,
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  *,
 .p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) * {
   color: white !important;
 }
 
-.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) .p-button-icon,
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  .p-button-icon,
 .p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) .p-button-icon {
   color: white !important;
 }
 
-.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(.p-button-contrast) i[class*="pi-"],
-.p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) i[class*="pi-"] {
+.p-button:active:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-success
+  ):not(.p-button-info):not(.p-button-warn):not(.p-button-help):not(.p-button-danger):not(
+    .p-button-contrast
+  )
+  i[class*='pi-'],
+.p-button.p-button-primary:active:not(.p-button-outlined):not(.p-button-text) i[class*='pi-'] {
   color: white !important;
 }
 
 /* Especial para botones con estilos en línea (como LoginView) */
-button[class*="bg-secondary"] .p-button-icon,
-button[class*="bg-secondary"] i[class*="pi-"] {
+button[class*='bg-secondary'] .p-button-icon,
+button[class*='bg-secondary'] i[class*='pi-'] {
   color: white !important;
 }
 

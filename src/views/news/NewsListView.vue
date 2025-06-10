@@ -85,7 +85,7 @@ const selectedStatus = ref<NewsStatus | null>(null)
 // Opciones de filtros (ajustadas según el rol)
 const typeOptions = computed(() => {
   const baseOptions = [{ label: 'Todos', value: null }]
-  
+
   // Para jueces y presidentes de audiencia, solo avisos y comunicados
   if (isJuez.value || isPresidenteAudiencia.value) {
     return [
@@ -94,7 +94,7 @@ const typeOptions = computed(() => {
       { label: 'Comunicado', value: NewsType.COMUNICADO },
     ]
   }
-  
+
   // Para otros roles, todos los tipos
   return [
     ...baseOptions,
@@ -126,7 +126,7 @@ const handleViewPending = () => {
 const loadDataIfNeeded = async () => {
   // Verificar si necesita recarga por acciones previas
   const wasRefreshed = await checkAndRefreshIfNeeded()
-  
+
   // Si no se refrescó y la lista está vacía, hacer carga inicial
   if (!wasRefreshed && newsList.value.length === 0) {
     refreshNews()
@@ -267,7 +267,7 @@ const hasImage = (news: News) => {
         <i class="pi pi-chevron-right text-sm"></i>
         <span>Noticias</span>
       </div>
-      
+
       <h1 class="text-3xl font-bold text-gray-900">
         <template v-if="isTecnicoPrensa">Mis Noticias</template>
         <template v-else-if="isDirectorPrensa">Mis Noticias y Aprobaciones</template>
@@ -378,7 +378,11 @@ const hasImage = (news: News) => {
               <!-- Botón crear aviso/comunicado para juzgados -->
               <Button
                 v-if="canSubmitFromCourt"
-                :label="isJuez || isPresidenteAudiencia ? 'Nuevo Aviso/Comunicado' : 'Enviar desde Juzgado'"
+                :label="
+                  isJuez || isPresidenteAudiencia
+                    ? 'Nuevo Aviso/Comunicado'
+                    : 'Enviar desde Juzgado'
+                "
                 icon="pi pi-plus"
                 severity="info"
                 @click="navigateToCourtSubmission"
@@ -593,7 +597,11 @@ const hasImage = (news: News) => {
               />
               <Button
                 v-if="canSubmitFromCourt && !canCreateNews"
-                :label="isJuez || isPresidenteAudiencia ? 'Crear Primer Aviso/Comunicado' : 'Enviar desde Juzgado'"
+                :label="
+                  isJuez || isPresidenteAudiencia
+                    ? 'Crear Primer Aviso/Comunicado'
+                    : 'Enviar desde Juzgado'
+                "
                 icon="pi pi-plus"
                 @click="navigateToCourtSubmission"
                 severity="info"

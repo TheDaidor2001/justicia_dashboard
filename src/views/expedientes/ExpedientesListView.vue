@@ -125,7 +125,7 @@ const onPageChange = (event: any) => {
         <i class="pi pi-chevron-right text-sm"></i>
         <span>Expedientes</span>
       </div>
-      
+
       <h1 class="text-3xl font-bold text-gray-900">
         <template v-if="isJuez">Mis Expedientes</template>
         <template v-else-if="isPresidenteAudiencia">Expedientes para Aprobación</template>

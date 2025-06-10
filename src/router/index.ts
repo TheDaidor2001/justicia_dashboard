@@ -125,26 +125,11 @@ const router = createRouter({
     {
       path: '/admin/usuarios/nuevo',
       name: 'usuario-nuevo',
-      component: () => import('@/views/users/UserEditView.vue'),
+      component: () => import('@/views/users/UserCreateView.vue'),
       meta: { requiresAuth: true },
       beforeEnter: (to, from, next) => {
         const authStore = useAuthStore()
         // Solo admins pueden crear usuarios según los endpoints POST /users
-        if (authStore.user?.role === 'admin') {
-          next()
-        } else {
-          next('/dashboard')
-        }
-      },
-    },
-    {
-      path: '/admin/usuarios/:id',
-      name: 'usuario-detalle',
-      component: () => import('@/views/users/UserDetailView.vue'),
-      meta: { requiresAuth: true },
-      beforeEnter: (to, from, next) => {
-        const authStore = useAuthStore()
-        // Solo admins pueden ver usuario específico según los endpoints GET /users/:id
         if (authStore.user?.role === 'admin') {
           next()
         } else {
@@ -166,6 +151,73 @@ const router = createRouter({
           next('/dashboard')
         }
       },
+    },
+    // Rutas de gestión de libros - Solo admins según los endpoints especificados
+    {
+      path: '/admin/libros',
+      name: 'libros',
+      component: () => import('@/views/books/BooksListView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden ver libros según los endpoints GET /books
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
+    {
+      path: '/admin/libros/nuevo',
+      name: 'libro-nuevo',
+      component: () => import('@/views/books/BookCreateView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden crear libros según los endpoints POST /books
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
+    {
+      path: '/admin/libros/:id/editar',
+      name: 'libro-editar',
+      component: () => import('@/views/books/BookEditView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden modificar libros según los endpoints PUT /books/:id
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
+    {
+      path: '/admin/libros/:id',
+      name: 'libro-detalle',
+      component: () => import('@/views/books/BookDetailView.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore()
+        // Solo admins pueden ver detalles de libros según los endpoints GET /books/:id
+        if (authStore.user?.role === 'admin') {
+          next()
+        } else {
+          next('/dashboard')
+        }
+      },
+    },
+    {
+      path: '/ayuda',
+      name: 'ayuda',
+      component: () => import('@/views/HelpView.vue'),
+      meta: { requiresAuth: true },
     },
   ],
 })
