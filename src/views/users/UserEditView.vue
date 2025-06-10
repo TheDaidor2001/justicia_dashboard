@@ -145,7 +145,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/users'
 import { userService } from '@/services/user.service'
 import { useToast } from 'primevue/usetoast'
-import type { UserRole } from '@/types/user'
+import type { UserRole, UpdateUserRequest } from '@/types/user'
 import { USER_ROLE_LABELS } from '@/types/user'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -212,16 +212,14 @@ const loadUser = async () => {
     const user = await userService.getUserById(userId.value)
 
     // Poblar el formulario con los datos del usuario
-    const userData = user.data || user.user || user
+    const userData = user
 
-    userForm.value.email = userData.email || userData.correo || ''
-    userForm.value.dni = userData.dni || userData.document || userData.documento || ''
-    userForm.value.nombre =
-      userData.nombre || userData.name || userData.fullName || userData.full_name || ''
-    userForm.value.telefono = userData.telefono || userData.phone || userData.celular || ''
-    userForm.value.rol = userData.rol || userData.role || userData.userRole || ''
-    userForm.value.departamento_id =
-      userData.departamento_id || userData.department_id || userData.departmentId || ''
+    userForm.value.email = userData.email
+    userForm.value.dni = userData.dni
+    userForm.value.nombre = userData.nombre
+    userForm.value.telefono = userData.telefono || ''
+    userForm.value.rol = userData.rol
+    userForm.value.departamento_id = userData.departamento_id
   } catch (error: any) {
     console.error('Error al cargar usuario:', error)
     toast.add({
@@ -259,11 +257,11 @@ const goBack = () => {
 const saveUser = async () => {
   loading.value = true
   try {
-    const updateData = {
-      fullName: userForm.value.nombre,
-      phone: userForm.value.telefono || undefined,
-      role: userForm.value.rol as UserRole,
-      departmentId: userForm.value.departamento_id,
+    const updateData: UpdateUserRequest = {
+      nombre: userForm.value.nombre,
+      telefono: userForm.value.telefono || undefined,
+      rol: userForm.value.rol as UserRole,
+      departamento_id: userForm.value.departamento_id,
     }
 
     await userStore.updateUser(userId.value, updateData)

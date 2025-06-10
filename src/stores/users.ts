@@ -164,15 +164,13 @@ export const useUserStore = defineStore('users', () => {
       if (!user) throw new Error('Usuario no encontrado')
 
       // Determinar el estado actual
-      const currentStatus = user.estado === 'activo' || user.isActive === true
+      const currentStatus = user.estado === 'activo'
 
       // Validaciones antes de desactivar
       if (currentStatus) {
         // Verificar que no sea el único admin
-        if (user.rol === 'admin' || user.role === 'admin') {
-          const activeAdmins = adminUsers.value.filter(
-            (u) => (u.estado === 'activo' || u.isActive === true) && u.id !== id,
-          )
+        if (user.rol === 'admin') {
+          const activeAdmins = adminUsers.value.filter((u) => u.estado === 'activo' && u.id !== id)
           if (activeAdmins.length === 0) {
             throw new Error('No se puede desactivar el último administrador del sistema')
           }
@@ -211,12 +209,12 @@ export const useUserStore = defineStore('users', () => {
       if (!user) throw new Error('Usuario no encontrado')
 
       // Desactivar el usuario directamente
-      await userService.updateUser(id, { isActive: false })
+      await userService.updateUser(id, { estado: 'inactivo' })
 
       // Actualizar en el store
       const index = users.value.findIndex((u) => u.id === id)
       if (index !== -1) {
-        users.value[index] = { ...users.value[index], isActive: false, estado: 'inactivo' }
+        users.value[index] = { ...users.value[index], estado: 'inactivo' }
       }
 
       return users.value[index]
@@ -252,19 +250,8 @@ export const useUserStore = defineStore('users', () => {
 
       const response = await userService.getDepartments()
 
-      // Intentar diferentes estructuras de respuesta
-      let departmentData = response
-      if (response?.success && response?.data) {
-        departmentData = response.data
-      } else if (response?.data) {
-        departmentData = response.data
-      } else if (response?.departments) {
-        departmentData = response.departments
-      } else if (Array.isArray(response)) {
-        departmentData = response
-      }
-
-      departments.value = Array.isArray(departmentData) ? departmentData : []
+      // La respuesta ya es un array de departamentos
+      departments.value = Array.isArray(response) ? response : []
 
       return departments.value
     } catch (err: any) {

@@ -31,58 +31,26 @@
       </div>
     </div>
 
-    <!-- Estadísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card class="border-l-4 border-l-blue-500">
-        <template #content>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">Total de Libros</p>
-              <p class="text-2xl font-bold text-gray-900">{{ bookStats.total || 0 }}</p>
-            </div>
-            <i class="pi pi-book text-2xl text-blue-500"></i>
-          </div>
-        </template>
-      </Card>
-
-      <Card class="border-l-4 border-l-green-500">
-        <template #content>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">Libros Públicos</p>
-              <p class="text-2xl font-bold text-gray-900">{{ bookStats.publicBooks || 0 }}</p>
-            </div>
-            <i class="pi pi-unlock text-2xl text-green-500"></i>
-          </div>
-        </template>
-      </Card>
-
-      <Card class="border-l-4 border-l-orange-500">
-        <template #content>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">Libros Privados</p>
-              <p class="text-2xl font-bold text-gray-900">{{ bookStats.privateBooks || 0 }}</p>
-            </div>
-            <i class="pi pi-lock text-2xl text-orange-500"></i>
-          </div>
-        </template>
-      </Card>
-
-      <Card class="border-l-4 border-l-purple-500">
-        <template #content>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">Tamaño Total</p>
-              <p class="text-2xl font-bold text-gray-900">
-                {{ formatFileSize(bookStats.totalSize || 0) }}
-              </p>
-            </div>
-            <i class="pi pi-database text-2xl text-purple-500"></i>
-          </div>
-        </template>
-      </Card>
-    </div>
+    <!-- Tags populares -->
+    <Card v-if="popularTags && popularTags.length > 0" class="mb-6">
+      <template #content>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-900">Tags Populares</h3>
+          <i class="pi pi-tag text-gray-500"></i>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <Tag
+            v-for="tag in popularTags.slice(0, 10)"
+            :key="tag"
+            :value="tag"
+            severity="secondary"
+            size="small"
+            class="cursor-pointer hover:bg-gray-200"
+            @click="searchByTag(tag)"
+          />
+        </div>
+      </template>
+    </Card>
 
     <!-- Filtros -->
     <Card>
@@ -353,7 +321,7 @@ const toast = useToast()
 
 const {
   books,
-  bookStats,
+  popularTags,
   filters,
   loading,
   canCreateBooks,
@@ -363,12 +331,11 @@ const {
   fetchBooks,
   deleteBook: deleteBookAction,
   downloadBook: downloadBookAction,
-  fetchBookStats,
+  fetchPopularTags,
   setFilters,
   resetFilters,
   getBookTypeLabel,
   getBookTypeColor,
-  formatFileSize,
 } = useBooks()
 
 // Estado local
@@ -459,8 +426,8 @@ const deleteBook = async () => {
     showDeleteDialog.value = false
     bookToDelete.value = null
 
-    // Recargar la lista y estadísticas
-    await Promise.all([fetchBooks(), fetchBookStats()])
+    // Recargar la lista y tags populares
+    await Promise.all([fetchBooks(), fetchPopularTags()])
   } catch (error: any) {
     console.error('Error al eliminar libro:', error)
     toast.add({
@@ -494,10 +461,15 @@ const downloadBook = async (book: any) => {
   }
 }
 
+// Función para buscar por tag
+const searchByTag = (tag: string) => {
+  searchQuery.value = tag
+}
+
 // Ciclo de vida
 onMounted(async () => {
   try {
-    await Promise.all([fetchBooks(), fetchBookStats()])
+    await Promise.all([fetchBooks(), fetchPopularTags()])
   } catch (error: any) {
     console.error('Error al cargar datos:', error)
     toast.add({

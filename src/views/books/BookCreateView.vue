@@ -166,11 +166,7 @@
                       @change="handleFileSelect"
                       class="hidden"
                     />
-                    <div
-                      v-if="!bookForm.file"
-                      @click="$refs.fileInput.click()"
-                      class="cursor-pointer"
-                    >
+                    <div v-if="!bookForm.file" @click="fileInput?.click()" class="cursor-pointer">
                       <i class="pi pi-upload text-3xl text-gray-400 mb-2"></i>
                       <p class="text-gray-600">Haz clic para seleccionar un archivo</p>
                       <p class="text-sm text-gray-500 mt-1">PDF, EPUB, DOC, DOCX (máx. 50MB)</p>
@@ -186,7 +182,7 @@
                         severity="secondary"
                         outlined
                         size="small"
-                        @click="$refs.fileInput.click()"
+                        @click="fileInput?.click()"
                       />
                     </div>
                   </div>
@@ -204,11 +200,7 @@
                       @change="handleCoverSelect"
                       class="hidden"
                     />
-                    <div
-                      v-if="!bookForm.cover"
-                      @click="$refs.coverInput.click()"
-                      class="cursor-pointer"
-                    >
+                    <div v-if="!bookForm.cover" @click="coverInput?.click()" class="cursor-pointer">
                       <i class="pi pi-image text-2xl text-gray-400 mb-2"></i>
                       <p class="text-gray-600">Imagen de portada</p>
                       <p class="text-sm text-gray-500">JPG, PNG, WebP (máx. 5MB)</p>
@@ -226,7 +218,7 @@
                         severity="secondary"
                         outlined
                         size="small"
-                        @click="$refs.coverInput.click()"
+                        @click="coverInput?.click()"
                       />
                     </div>
                   </div>
@@ -337,6 +329,10 @@ const bookForm = ref<CreateBookRequest>({
 
 const tagsString = ref('')
 const coverPreview = ref<string | null>(null)
+
+// Referencias a elementos del template
+const fileInput = ref<HTMLInputElement>()
+const coverInput = ref<HTMLInputElement>()
 
 // Errores de validación
 const titleError = ref('')

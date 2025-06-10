@@ -199,7 +199,7 @@ import { useVuelidate } from '@vuelidate/core'
 import { required, email, minLength, sameAs, helpers } from '@vuelidate/validators'
 import { useUserStore } from '@/stores/users'
 import { useToast } from 'primevue/usetoast'
-import type { UserRole } from '@/types/user'
+import type { UserRole, CreateUserRequest } from '@/types/user'
 import { USER_ROLE_LABELS } from '@/types/user'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -298,7 +298,7 @@ const dniValidator = helpers.withMessage(
 )
 
 const validationRules = computed(() => {
-  const baseRules = {
+  const baseRules: any = {
     email: { required, email },
     dni: { required, dniValidator },
     nombre: { required, minLength: minLength(3) },
@@ -369,13 +369,13 @@ const createUser = async () => {
 
   loading.value = true
   try {
-    const createData = {
+    const createData: CreateUserRequest = {
       email: userForm.value.email,
       dni: userForm.value.dni,
-      fullName: userForm.value.nombre,
-      phone: userForm.value.telefono || undefined,
-      role: userForm.value.rol as UserRole,
-      departmentId: userForm.value.departamento_id,
+      nombre: userForm.value.nombre,
+      telefono: userForm.value.telefono || undefined,
+      rol: userForm.value.rol as UserRole,
+      departamento_id: userForm.value.departamento_id,
       password: userForm.value.password,
     }
 

@@ -302,13 +302,12 @@ const loadStats = async () => {
       }
     }
 
-    // Cargar estadísticas de libros (solo para admins)
+    // Cargar datos de libros (solo para admins)
     if (userRole.value === 'admin') {
       try {
-        const booksResult = await booksStore.fetchBookStats()
-        if (booksResult) {
-          stats.value.librosTotal = booksResult.total || 0
-        }
+        await booksStore.fetchBooks()
+        // Calcular total de libros desde los datos cargados
+        stats.value.librosTotal = booksStore.books.length
       } catch (error) {
         console.error('Error al cargar estadísticas de libros:', error)
       }

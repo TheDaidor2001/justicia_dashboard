@@ -132,7 +132,9 @@
                 </div>
 
                 <div
-                  v-if="userRole && ['presidente_audiencia', 'secretario_general'].includes(userRole)"
+                  v-if="
+                    userRole && ['presidente_audiencia', 'secretario_general'].includes(userRole)
+                  "
                   class="p-4 border rounded-lg"
                 >
                   <h4 class="font-medium text-gray-900 mb-2">✅ Revisar Expedientes</h4>

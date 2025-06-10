@@ -72,6 +72,7 @@ export interface UpdateUserRequest {
   rol?: UserRole
   departamento_id?: string
   permisos_especiales?: string[]
+  estado?: 'activo' | 'inactivo'
 }
 
 export interface UserListResponse {

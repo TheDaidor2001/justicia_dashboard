@@ -21,7 +21,7 @@ export const booksService = {
     params.append('page', pagination.page.toString())
     params.append('limit', pagination.limit.toString())
 
-    const response = await api.get(`/books?${params.toString()}`)
+    const response = await api.get(`/books/public?${params.toString()}`)
     return response.data
   },
 
@@ -80,14 +80,8 @@ export const booksService = {
     return response.data
   },
 
-  async getBookStats(): Promise<{
-    total: number
-    byType: Record<string, number>
-    publicBooks: number
-    privateBooks: number
-    totalSize: number
-  }> {
-    const response = await api.get('/books/stats')
+  async getPopularTags(limit: number = 20): Promise<string[]> {
+    const response = await api.get(`/books/tags/popular?limit=${limit}`)
     return response.data
   },
 
@@ -104,7 +98,7 @@ export const booksService = {
       params.append('isPublic', filters.isPublic.toString())
     }
 
-    const response = await api.get(`/books?${params.toString()}`)
+    const response = await api.get(`/books/public?${params.toString()}`)
     return response.data?.data || []
   },
 

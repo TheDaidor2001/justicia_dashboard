@@ -15,13 +15,7 @@ export const useBooksStore = defineStore('books', () => {
   // Estado
   const books = ref<Book[]>([])
   const currentBook = ref<Book | null>(null)
-  const bookStats = ref({
-    total: 0,
-    byType: {} as Record<string, number>,
-    publicBooks: 0,
-    privateBooks: 0,
-    totalSize: 0,
-  })
+  const popularTags = ref<string[]>([])
 
   const filters = ref<BookFilters>({
     search: '',
@@ -143,8 +137,8 @@ export const useBooksStore = defineStore('books', () => {
       const newBook = await booksService.createBook(bookData)
       books.value.unshift(newBook)
 
-      // Actualizar estadísticas
-      await fetchBookStats()
+      // Actualizar tags populares
+      await fetchPopularTags()
 
       return newBook
     } catch (err: any) {
@@ -193,8 +187,8 @@ export const useBooksStore = defineStore('books', () => {
         currentBook.value = null
       }
 
-      // Actualizar estadísticas
-      await fetchBookStats()
+      // Actualizar tags populares
+      await fetchPopularTags()
     } catch (err: any) {
       error.value = err.message || 'Error al eliminar libro'
       throw err
@@ -237,13 +231,13 @@ export const useBooksStore = defineStore('books', () => {
     }
   }
 
-  const fetchBookStats = async () => {
+  const fetchPopularTags = async (limit: number = 20) => {
     try {
-      const stats = await booksService.getBookStats()
-      bookStats.value = stats
-      return stats
+      const tags = await booksService.getPopularTags(limit)
+      popularTags.value = tags
+      return tags
     } catch (err: any) {
-      error.value = err.message || 'Error al cargar estadísticas'
+      error.value = err.message || 'Error al cargar tags populares'
       throw err
     }
   }
@@ -276,7 +270,7 @@ export const useBooksStore = defineStore('books', () => {
     // Estado
     books,
     currentBook,
-    bookStats,
+    popularTags,
     filters,
     pagination,
     loading,
@@ -297,7 +291,7 @@ export const useBooksStore = defineStore('books', () => {
     deleteBook,
     downloadBook,
     searchBooks,
-    fetchBookStats,
+    fetchPopularTags,
     setFilters,
     resetFilters,
     setPagination,
