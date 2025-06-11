@@ -41,7 +41,19 @@ export const userService = {
   },
 
   async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {
-    const response = await api.put(`/users/${id}`, userData)
+    // Mapear los campos del formato español al formato inglés que espera el backend
+    const mappedData: any = {}
+    
+    if (userData.nombre !== undefined) mappedData.fullName = userData.nombre
+    if (userData.telefono !== undefined) mappedData.phone = userData.telefono
+    if (userData.rol !== undefined) mappedData.role = userData.rol
+    if (userData.departamento_id !== undefined) mappedData.departmentId = userData.departamento_id
+    if (userData.permisos_especiales !== undefined) mappedData.permissions = userData.permisos_especiales
+    if (userData.estado !== undefined) mappedData.isActive = userData.estado === 'activo'
+    
+    console.log('Mapped update data:', mappedData)
+    
+    const response = await api.put(`/users/${id}`, mappedData)
     return response.data
   },
 

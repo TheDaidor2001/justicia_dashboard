@@ -158,7 +158,7 @@
               <div class="flex items-center gap-3">
                 <i class="pi pi-file text-2xl text-blue-500"></i>
                 <div>
-                  <p class="font-medium text-gray-900">{{ currentBook.file }}</p>
+                  <p class="font-medium text-gray-900">{{ getFileName(currentBook.fileUrl) }}</p>
                   <p class="text-sm text-gray-600">
                     Subido el {{ new Date(currentBook.createdAt).toLocaleDateString('es-ES') }}
                   </p>
@@ -171,14 +171,67 @@
     </Card>
 
     <!-- Loading state -->
-    <Card v-else-if="loading">
-      <template #content>
-        <div class="text-center py-8">
-          <ProgressSpinner />
-          <p class="text-gray-600 mt-4">Cargando información del libro...</p>
-        </div>
-      </template>
-    </Card>
+    <div v-else-if="loading" class="space-y-6">
+      <Card class="relative">
+        <template #content>
+          <div class="animate-pulse space-y-6">
+            <!-- Header skeleton -->
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="h-8 bg-gray-200 rounded w-64 mb-2"></div>
+                <div class="h-5 bg-gray-200 rounded w-96"></div>
+              </div>
+              <div class="flex gap-2">
+                <div class="h-10 bg-gray-200 rounded w-24"></div>
+                <div class="h-10 bg-gray-200 rounded w-28"></div>
+              </div>
+            </div>
+            
+            <!-- Form skeleton -->
+            <div class="space-y-4">
+              <div>
+                <div class="h-4 bg-gray-200 rounded w-16 mb-2"></div>
+                <div class="h-10 bg-gray-200 rounded w-full"></div>
+              </div>
+              
+              <div>
+                <div class="h-4 bg-gray-200 rounded w-20 mb-2"></div>
+                <div class="h-10 bg-gray-200 rounded w-full"></div>
+              </div>
+              
+              <div>
+                <div class="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                <div class="h-24 bg-gray-200 rounded w-full"></div>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <div class="h-4 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div class="h-10 bg-gray-200 rounded w-full"></div>
+                </div>
+                <div>
+                  <div class="h-4 bg-gray-200 rounded w-20 mb-2"></div>
+                  <div class="h-10 bg-gray-200 rounded w-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Loading overlay with spinner -->
+          <div class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+            <div class="text-center">
+              <ProgressSpinner 
+                style="width: 50px; height: 50px" 
+                strokeWidth="4" 
+                animationDuration=".8s"
+              />
+              <p class="text-gray-700 font-medium mt-4">Cargando información del libro...</p>
+              <p class="text-sm text-gray-500 mt-1">Por favor espere un momento</p>
+            </div>
+          </div>
+        </template>
+      </Card>
+    </div>
   </div>
 </template>
 
@@ -218,6 +271,11 @@ const bookForm = ref<UpdateBookRequest>({
 })
 
 const tagsString = ref('')
+
+const getFileName = (filePath: string | undefined) => {
+  if (!filePath) return 'Archivo no disponible'
+  return filePath.split('/').pop() || filePath
+}
 
 // Opciones para selects
 const typeOptions = Object.entries(BOOK_TYPE_LABELS).map(([value, label]) => ({

@@ -1,0 +1,8 @@
+export type * from './auth'
+export type * from './user'
+export type * from './news'
+export type * from './expediente'
+export type * from './dashboard'
+export type * from './document'
+export type * from './book'
+export type * from './profile'

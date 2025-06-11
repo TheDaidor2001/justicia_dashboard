@@ -209,17 +209,19 @@ const departments = computed(() => {
 const loadUser = async () => {
   try {
     loading.value = true
-    const user = await userService.getUserById(userId.value)
-
-    // Poblar el formulario con los datos del usuario
-    const userData = user
+    const response = await userService.getUserById(userId.value)
+    
+    // Extraer el usuario de la respuesta (puede venir como response.data)
+    const userData = response.data || response
+    
+    console.log('User data loaded:', userData)
 
     userForm.value.email = userData.email
     userForm.value.dni = userData.dni
-    userForm.value.nombre = userData.nombre
-    userForm.value.telefono = userData.telefono || ''
-    userForm.value.rol = userData.rol
-    userForm.value.departamento_id = userData.departamento_id
+    userForm.value.nombre = userData.fullName || userData.nombre || ''
+    userForm.value.telefono = userData.phone || userData.telefono || ''
+    userForm.value.rol = userData.role || userData.rol || ''
+    userForm.value.departamento_id = userData.departmentId || userData.departamento_id || ''
   } catch (error: any) {
     console.error('Error al cargar usuario:', error)
     toast.add({

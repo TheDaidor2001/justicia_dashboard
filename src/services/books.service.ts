@@ -27,6 +27,13 @@ export const booksService = {
 
   async getBookById(id: string): Promise<Book> {
     const response = await api.get(`/books/${id}`)
+    console.log('Raw API response for book:', response)
+    
+    // Si la respuesta viene envuelta en un objeto con success/data
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      return response.data.data
+    }
+    
     return response.data
   },
 
@@ -61,7 +68,7 @@ export const booksService = {
         'Content-Type': 'multipart/form-data',
       },
     })
-    return response.data
+    return response.data.data || response.data
   },
 
   async updateBook(id: string, bookData: UpdateBookRequest): Promise<Book> {
@@ -73,10 +80,14 @@ export const booksService = {
     await api.delete(`/books/${id}`)
   },
 
-  async downloadBook(id: string): Promise<Blob> {
-    const response = await api.get(`/books/${id}/download`, {
-      responseType: 'blob',
-    })
+  async downloadBook(id: string): Promise<{ url: string; filename: string }> {
+    const response = await api.get(`/books/${id}/download`)
+    
+    // El endpoint devuelve JSON con la URL de descarga
+    if (response.data && response.data.data) {
+      return response.data.data
+    }
+    
     return response.data
   },
 

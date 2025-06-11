@@ -39,13 +39,15 @@
                   icon="pi pi-pencil"
                   severity="warn"
                   outlined
+                  class="!text-white"
                   @click="editBook"
                 />
                 <Button
                   v-if="canDownloadBooks"
-                  label="Descargar"
-                  icon="pi pi-download"
+                  label="Ver archivo"
+                  icon="pi pi-external-link"
                   severity="success"
+                  class="!text-white"
                   @click="downloadBook"
                 />
               </div>
@@ -124,18 +126,18 @@
               </div>
 
               <!-- Información del usuario que subió -->
-              <div v-if="currentBook.uploadedBy">
+              <div v-if="currentBook.uploader">
                 <label class="text-sm font-medium text-gray-700">Subido por</label>
                 <div class="flex items-center gap-3 mt-2">
                   <Avatar
-                    :label="getAvatarLabel(currentBook.uploadedBy.name)"
+                    :label="getAvatarLabel(currentBook.uploader.fullName)"
                     size="normal"
                     shape="circle"
                     class="bg-gray-200 text-gray-700"
                   />
                   <div>
-                    <p class="font-medium text-gray-900">{{ currentBook.uploadedBy.name }}</p>
-                    <p class="text-sm text-gray-600">{{ currentBook.uploadedBy.email }}</p>
+                    <p class="font-medium text-gray-900">{{ currentBook.uploader.fullName || 'Usuario' }}</p>
+                    <p class="text-sm text-gray-600">{{ currentBook.uploader.email || '' }}</p>
                   </div>
                 </div>
               </div>
@@ -147,12 +149,12 @@
       <!-- Panel lateral -->
       <div class="space-y-6">
         <!-- Portada -->
-        <Card v-if="currentBook.cover">
+        <Card v-if="currentBook.coverImageUrl">
           <template #content>
             <div class="text-center">
               <h4 class="font-medium text-gray-900 mb-4">Portada</h4>
               <img
-                :src="currentBook.cover"
+                :src="currentBook.coverImageUrl"
                 :alt="`Portada de ${currentBook.title}`"
                 class="w-full max-w-48 mx-auto rounded-lg shadow-md"
               />
@@ -170,9 +172,9 @@
                 <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <i class="pi pi-file text-2xl text-blue-500"></i>
                   <div class="flex-1">
-                    <p class="font-medium text-gray-900">{{ getFileName(currentBook.file) }}</p>
+                    <p class="font-medium text-gray-900">{{ getFileName(currentBook.fileUrl) }}</p>
                     <p class="text-sm text-gray-600">
-                      {{ getFileExtension(currentBook.file) }}
+                      <span v-if="currentBook.fileUrl">{{ getFileExtension(currentBook.fileUrl) }}</span>
                       <span v-if="currentBook.fileSize">
                         • {{ formatFileSize(currentBook.fileSize) }}
                       </span>
@@ -182,10 +184,10 @@
 
                 <Button
                   v-if="canDownloadBooks"
-                  label="Descargar archivo"
-                  icon="pi pi-download"
+                  label="Ver archivo"
+                  icon="pi pi-external-link"
                   severity="success"
-                  class="w-full"
+                  class="w-full !text-white"
                   @click="downloadBook"
                 />
               </div>
@@ -205,27 +207,27 @@
                   icon="pi pi-arrow-left"
                   severity="secondary"
                   outlined
-                  class="w-full"
+                  class="w-full !text-white"
                   @click="goBack"
                 />
 
                 <Button
-                  v-if="canEditBook(currentBook)"
+                  v-if="currentBook && canEditBook(currentBook)"
                   label="Editar libro"
                   icon="pi pi-pencil"
                   severity="warn"
                   outlined
-                  class="w-full"
+                  class="w-full !text-white"
                   @click="editBook"
                 />
 
                 <Button
-                  v-if="canDeleteBook(currentBook)"
+                  v-if="currentBook && canDeleteBook(currentBook)"
                   label="Eliminar libro"
                   icon="pi pi-trash"
                   severity="danger"
                   outlined
-                  class="w-full"
+                  class="w-full !text-white"
                   @click="confirmDeleteBook"
                 />
               </div>
@@ -294,7 +296,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Card from 'primevue/card'
@@ -331,6 +333,7 @@ const deletingBook = ref(false)
 const loadBook = async () => {
   try {
     await fetchBookById(bookId)
+    console.log('currentBook after fetch:', currentBook.value)
   } catch (error: any) {
     console.error('Error al cargar libro:', error)
     toast.add({
@@ -342,11 +345,13 @@ const loadBook = async () => {
   }
 }
 
-const getFileName = (filePath: string) => {
+const getFileName = (filePath: string | undefined) => {
+  if (!filePath) return 'Archivo no disponible'
   return filePath.split('/').pop() || filePath
 }
 
-const getAvatarLabel = (name: string) => {
+const getAvatarLabel = (name: string | undefined) => {
+  if (!name) return 'U'
   const names = name.split(' ')
   return names.length > 1
     ? `${names[0][0]}${names[1][0]}`.toUpperCase()
@@ -368,8 +373,8 @@ const downloadBook = async () => {
     await downloadBookAction(currentBook.value)
     toast.add({
       severity: 'success',
-      summary: 'Descarga iniciada',
-      detail: `Descargando "${currentBook.value.title}"`,
+      summary: 'Abriendo archivo',
+      detail: `Abriendo "${currentBook.value.title}" en nueva pestaña`,
       life: 3000,
     })
   } catch (error: any) {
@@ -377,7 +382,7 @@ const downloadBook = async () => {
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'Error al descargar el libro',
+      detail: 'Error al abrir el archivo',
       life: 3000,
     })
   }
@@ -416,7 +421,17 @@ const deleteBook = async () => {
   }
 }
 
+// Watcher temporal para depuración
+watch(currentBook, (newValue) => {
+  console.log('currentBook changed:', newValue)
+}, { deep: true })
+
+watch(loading, (newValue) => {
+  console.log('loading changed:', newValue)
+})
+
 onMounted(() => {
+  console.log('Component mounted, bookId:', bookId)
   loadBook()
 })
 </script>

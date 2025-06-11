@@ -96,7 +96,15 @@ export const useBooksStore = defineStore('books', () => {
         requestPagination,
       )
 
-      books.value = response.data || []
+      // Asegurarse de que books.value siempre sea un array
+      if (Array.isArray(response.data)) {
+        books.value = response.data
+      } else if (Array.isArray(response)) {
+        books.value = response
+      } else {
+        books.value = []
+      }
+      
       pagination.value = {
         page: response.page || 1,
         limit: response.limit || 20,
@@ -118,6 +126,8 @@ export const useBooksStore = defineStore('books', () => {
       error.value = null
 
       const book = await booksService.getBookById(id)
+      console.log('Book from service:', book)
+      
       currentBook.value = book
 
       return book
@@ -135,7 +145,11 @@ export const useBooksStore = defineStore('books', () => {
       error.value = null
 
       const newBook = await booksService.createBook(bookData)
-      books.value.unshift(newBook)
+      
+      // Solo agregar al array si es un objeto Book válido con ID
+      if (newBook && typeof newBook === 'object' && 'id' in newBook) {
+        books.value.unshift(newBook)
+      }
 
       // Actualizar tags populares
       await fetchPopularTags()
@@ -199,24 +213,32 @@ export const useBooksStore = defineStore('books', () => {
 
   const downloadBook = async (book: Book) => {
     try {
-      const blob = await booksService.downloadBook(book.id)
-
-      // Crear enlace de descarga
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-
-      // Determinar extensión del archivo
-      const extension = book.file.split('.').pop() || 'pdf'
-      const fileName = `${book.title.replace(/[^\w\s-]/g, '')}.${extension}`
-
-      link.download = fileName
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      // Primero intentar usar directamente la URL del archivo
+      if (book.fileUrl) {
+        let viewUrl = book.fileUrl
+        
+        // Corregir URLs duplicadas (temporal mientras se arregla el backend)
+        // Buscar y corregir la duplicación de /books/files/books/files/
+        if (viewUrl.includes('/books/files/books/files/')) {
+          console.log('Fixing duplicated path in URL')
+          viewUrl = viewUrl.replace('/books/files/books/files/', '/books/files/')
+        }
+        
+        console.log('Opening URL:', viewUrl)
+        window.open(viewUrl, '_blank')
+        return
+      }
+      
+      // Si no hay fileUrl, intentar obtener URL del backend
+      const downloadInfo = await booksService.downloadBook(book.id)
+      
+      if (downloadInfo && downloadInfo.url) {
+        window.open(downloadInfo.url, '_blank')
+      } else {
+        throw new Error('No se pudo obtener la URL del archivo')
+      }
     } catch (err: any) {
-      error.value = err.message || 'Error al descargar libro'
+      error.value = err.message || 'Error al abrir el libro'
       throw err
     }
   }

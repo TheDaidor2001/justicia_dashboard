@@ -40,7 +40,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
           <Tag
-            v-for="tag in popularTags.slice(0, 10)"
+            v-for="tag in (popularTags || []).slice(0, 10)"
             :key="tag"
             :value="tag"
             severity="secondary"
@@ -140,7 +140,7 @@
             <template #body="{ data }">
               <div class="flex items-center gap-3">
                 <div class="w-12 h-16 bg-gray-100 rounded flex items-center justify-center">
-                  <i v-if="data.cover" class="pi pi-image text-gray-500"></i>
+                  <i v-if="data.coverImageUrl" class="pi pi-image text-gray-500"></i>
                   <i v-else class="pi pi-book text-gray-500"></i>
                 </div>
                 <div>
@@ -162,13 +162,13 @@
             <template #body="{ data }">
               <div class="flex flex-wrap gap-1">
                 <Tag
-                  v-for="tag in data.tags.slice(0, 3)"
+                  v-for="tag in (data.tags || []).slice(0, 3)"
                   :key="tag"
                   :value="tag"
                   severity="secondary"
                   size="small"
                 />
-                <span v-if="data.tags.length > 3" class="text-xs text-gray-500">
+                <span v-if="data.tags && data.tags.length > 3" class="text-xs text-gray-500">
                   +{{ data.tags.length - 3 }} más
                 </span>
               </div>
@@ -368,7 +368,7 @@ const filteredBooks = computed(() => {
       (book) =>
         book.title.toLowerCase().includes(search) ||
         book.author.toLowerCase().includes(search) ||
-        book.tags.some((tag) => tag.toLowerCase().includes(search)),
+        (book.tags && Array.isArray(book.tags) && book.tags.some((tag) => tag.toLowerCase().includes(search))),
     )
   }
 

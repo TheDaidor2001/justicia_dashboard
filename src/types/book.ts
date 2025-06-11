@@ -5,15 +5,21 @@ export interface Book {
   author: string
   tags: string[]
   type: BookType
-  cover?: string
-  file: string
+  coverImageUrl?: string | null
+  coverImagePublicId?: string | null
+  fileUrl: string
+  filePublicId: string
   fileSize?: number
+  fileType?: string
+  uploadedBy: string
+  viewCount?: number
+  downloadCount?: number
   isPublic: boolean
   createdAt: string
   updatedAt: string
-  uploadedBy?: {
+  uploader?: {
     id: string
-    name: string
+    fullName: string
     email: string
   }
 }

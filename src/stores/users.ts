@@ -163,14 +163,17 @@ export const useUserStore = defineStore('users', () => {
       const user = users.value.find((u) => u.id === id)
       if (!user) throw new Error('Usuario no encontrado')
 
-      // Determinar el estado actual
-      const currentStatus = user.estado === 'activo'
+      // Determinar el estado actual - verificar tanto 'estado' como 'isActive'
+      const currentStatus = user.estado ? user.estado === 'activo' : user.isActive === true
 
       // Validaciones antes de desactivar
       if (currentStatus) {
         // Verificar que no sea el único admin
-        if (user.rol === 'admin') {
-          const activeAdmins = adminUsers.value.filter((u) => u.estado === 'activo' && u.id !== id)
+        if (user.rol === 'admin' || user.role === 'admin') {
+          const activeAdmins = adminUsers.value.filter((u) => {
+            const isActive = u.estado ? u.estado === 'activo' : u.isActive === true
+            return isActive && u.id !== id
+          })
           if (activeAdmins.length === 0) {
             throw new Error('No se puede desactivar el último administrador del sistema')
           }
@@ -184,7 +187,14 @@ export const useUserStore = defineStore('users', () => {
         }
       }
 
-      const updatedUser = await userService.toggleUserStatus(id, currentStatus)
+      console.log('Toggling user status:', { id, currentStatus })
+      
+      const response = await userService.toggleUserStatus(id, currentStatus)
+      console.log('Toggle response:', response)
+      
+      // Extraer el usuario de la respuesta si viene envuelto
+      const updatedUser = response.data || response
+      console.log('Updated user:', updatedUser)
 
       const index = users.value.findIndex((u) => u.id === id)
       if (index !== -1) {
