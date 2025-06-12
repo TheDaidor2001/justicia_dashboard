@@ -186,24 +186,24 @@
                 <div class="h-10 bg-gray-200 rounded w-28"></div>
               </div>
             </div>
-            
+
             <!-- Form skeleton -->
             <div class="space-y-4">
               <div>
                 <div class="h-4 bg-gray-200 rounded w-16 mb-2"></div>
                 <div class="h-10 bg-gray-200 rounded w-full"></div>
               </div>
-              
+
               <div>
                 <div class="h-4 bg-gray-200 rounded w-20 mb-2"></div>
                 <div class="h-10 bg-gray-200 rounded w-full"></div>
               </div>
-              
+
               <div>
                 <div class="h-4 bg-gray-200 rounded w-24 mb-2"></div>
                 <div class="h-24 bg-gray-200 rounded w-full"></div>
               </div>
-              
+
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <div class="h-4 bg-gray-200 rounded w-16 mb-2"></div>
@@ -216,13 +216,15 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Loading overlay with spinner -->
-          <div class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+          <div
+            class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg"
+          >
             <div class="text-center">
-              <ProgressSpinner 
-                style="width: 50px; height: 50px" 
-                strokeWidth="4" 
+              <ProgressSpinner
+                style="width: 50px; height: 50px"
+                strokeWidth="4"
                 animationDuration=".8s"
               />
               <p class="text-gray-700 font-medium mt-4">Cargando información del libro...</p>

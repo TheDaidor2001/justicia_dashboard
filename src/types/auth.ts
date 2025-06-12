@@ -1,5 +1,5 @@
 // Tipos para autenticación
-export interface User {
+export interface AuthUser {
   id: string
   email: string
   fullName: string
@@ -34,14 +34,14 @@ export interface LoginResponse {
   success: boolean
   message: string
   data: {
-    user: User
+    user: AuthUser
     accessToken: string
     refreshToken: string
   }
 }
 
 export interface AuthState {
-  user: User | null
+  user: AuthUser | null
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean

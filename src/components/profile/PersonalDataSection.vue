@@ -9,7 +9,7 @@
         label="Editar"
         outlined
         size="small"
-        style="color: #1f2937 !important; border-color: #6b7280 !important; background-color: white !important;"
+        class="edit-button"
       />
     </div>
 
@@ -30,18 +30,21 @@
           <template #content>
             <div class="flex items-start gap-6">
               <div class="flex-shrink-0">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                  {{ getInitials(profile.fullName || profile.name) }}
+                <div
+                  class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+                >
+                  {{ getInitials(profile.fullName) }}
                 </div>
               </div>
-              
+
               <div class="flex-1 min-w-0">
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">
-                  {{ profile.fullName || profile.name || 'Usuario' }}
+                  {{ profile.fullName || 'Usuario' }}
                 </h3>
                 <div class="flex items-center gap-3 mb-3">
-                  <UserRoleBadge v-if="profile.role" :role="profile.role" />
-                  <Badge v-if="profile.isActive !== undefined"
+                  <UserRoleBadge v-if="profile.role" :role="profile.role as UserRoleType" />
+                  <Badge
+                    v-if="profile.isActive !== undefined"
                     :value="profile.isActive ? 'Activo' : 'Inactivo'"
                     :severity="profile.isActive ? 'success' : 'danger'"
                   />
@@ -71,7 +74,7 @@
                   <label class="info-label text-gray-600">DNI</label>
                   <p class="info-value text-gray-900">{{ profile.dni || 'No especificado' }}</p>
                 </div>
-                
+
                 <div class="info-item">
                   <label class="info-label text-gray-600">Teléfono</label>
                   <p class="info-value flex items-center text-gray-900">
@@ -79,12 +82,12 @@
                     {{ profile.phone || 'No especificado' }}
                   </p>
                 </div>
-                
+
                 <div class="info-item">
                   <label class="info-label text-gray-600">Departamento</label>
                   <p class="info-value flex items-center text-gray-900">
                     <i class="pi pi-building mr-2 text-purple-600"></i>
-                    {{ profile.department || profile.departmentId || 'No especificado' }}
+                    {{ profile.department || 'No especificado' }}
                   </p>
                 </div>
               </div>
@@ -103,11 +106,13 @@
               <div class="space-y-4">
                 <div class="info-item">
                   <label class="info-label text-gray-600">ID de Usuario</label>
-                  <p class="info-value font-mono text-sm bg-gray-100 px-2 py-1 rounded text-gray-900">
+                  <p
+                    class="info-value font-mono text-sm bg-gray-100 px-2 py-1 rounded text-gray-900"
+                  >
                     {{ profile.id }}
                   </p>
                 </div>
-                
+
                 <div class="info-item">
                   <label class="info-label text-gray-600">Fecha de Creación</label>
                   <p class="info-value flex items-center text-gray-900">
@@ -115,7 +120,7 @@
                     {{ profile.createdAt ? formatDate(profile.createdAt) : 'No especificado' }}
                   </p>
                 </div>
-                
+
                 <div class="info-item" v-if="profile.updatedAt">
                   <label class="info-label text-gray-600">Última Actualización</label>
                   <p class="info-value flex items-center text-gray-900">
@@ -158,7 +163,7 @@
                       {{ $v.fullName.$errors[0].$message }}
                     </small>
                   </div>
-                  
+
                   <div class="form-group">
                     <label for="phone" class="form-label text-gray-700">
                       <i class="pi pi-phone mr-1"></i>
@@ -194,7 +199,7 @@
                       {{ $v.email.$errors[0].$message }}
                     </small>
                   </div>
-                  
+
                   <div class="bg-gray-100 p-4 rounded-lg">
                     <label class="form-label text-gray-600">
                       <i class="pi pi-id-card mr-1"></i>
@@ -245,6 +250,7 @@ import Card from 'primevue/card'
 import { useProfileStore } from '@/stores/profile'
 import UserRoleBadge from '@/components/users/UserRoleBadge.vue'
 import type { UpdateProfileRequest } from '@/types/profile'
+import type { UserRoleType } from '@/types/user'
 
 const profileStore = useProfileStore()
 
@@ -252,7 +258,7 @@ const isEditing = ref(false)
 const editForm = reactive<UpdateProfileRequest>({
   fullName: '',
   phone: '',
-  email: ''
+  email: '',
 })
 
 const profile = computed(() => profileStore.profile)
@@ -261,10 +267,10 @@ const loading = computed(() => profileStore.loading)
 const validationRules = computed(() => ({
   fullName: { required, minLength: minLength(2) },
   email: { required, email },
-  phone: {}
+  phone: {},
 }))
 
-const $v = useVuelidate(validationRules, editForm)
+const $v = useVuelidate(validationRules, editForm as any)
 
 async function loadProfile() {
   try {
@@ -276,11 +282,11 @@ async function loadProfile() {
 
 function startEditing() {
   if (!profile.value) return
-  
+
   editForm.fullName = profile.value.fullName
   editForm.phone = profile.value.phone
   editForm.email = profile.value.email
-  
+
   isEditing.value = true
   profileStore.clearError()
 }
@@ -308,7 +314,7 @@ function getInitials(name: string): string {
   if (!name) return 'U'
   return name
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase())
+    .map((word) => word.charAt(0).toUpperCase())
     .slice(0, 2)
     .join('')
 }
@@ -319,7 +325,7 @@ function formatDate(dateString: string): string {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 </script>
@@ -355,15 +361,15 @@ function formatDate(dateString: string): string {
 
 /* Forzar texto negro siempre */
 :deep(.p-card) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 :deep(.p-card .p-card-title) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 :deep(.p-card .p-card-content) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 /* Mejorar contraste en inputs */
@@ -380,36 +386,31 @@ function formatDate(dateString: string): string {
 }
 
 /* Asegurar visibilidad del botón Editar */
-:deep(.p-button-outlined) {
-  color: #1f2937 !important;
-  border-color: #6b7280 !important;
-  background-color: white !important;
+.edit-button :deep(.p-button) {
+  @apply !text-gray-800 !border-gray-500 !bg-white;
 }
 
-:deep(.p-button-outlined .p-button-label) {
-  color: #1f2937 !important;
+.edit-button :deep(.p-button-label) {
+  @apply !text-gray-800;
 }
 
-:deep(.p-button-outlined .p-button-icon) {
-  color: #1f2937 !important;
+.edit-button :deep(.p-button-icon) {
+  @apply !text-gray-800;
 }
 
-:deep(.p-button-outlined:hover) {
-  background-color: #f9fafb !important;
-  color: #111827 !important;
-  border-color: #374151 !important;
+.edit-button :deep(.p-button:hover) {
+  @apply !bg-gray-50 !text-gray-900 !border-gray-600;
 }
 
-:deep(.p-button-outlined:hover .p-button-label) {
-  color: #111827 !important;
+.edit-button :deep(.p-button:hover .p-button-label) {
+  @apply !text-gray-900;
 }
 
-:deep(.p-button-outlined:hover .p-button-icon) {
-  color: #111827 !important;
+.edit-button :deep(.p-button:hover .p-button-icon) {
+  @apply !text-gray-900;
 }
 
-:deep(.p-button-outlined:focus) {
-  border-color: #3b82f6 !important;
-  color: #1f2937 !important;
+.edit-button :deep(.p-button:focus) {
+  @apply !border-blue-500 !text-gray-800;
 }
 </style>

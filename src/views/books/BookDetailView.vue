@@ -136,7 +136,9 @@
                     class="bg-gray-200 text-gray-700"
                   />
                   <div>
-                    <p class="font-medium text-gray-900">{{ currentBook.uploader.fullName || 'Usuario' }}</p>
+                    <p class="font-medium text-gray-900">
+                      {{ currentBook.uploader.fullName || 'Usuario' }}
+                    </p>
                     <p class="text-sm text-gray-600">{{ currentBook.uploader.email || '' }}</p>
                   </div>
                 </div>
@@ -174,7 +176,9 @@
                   <div class="flex-1">
                     <p class="font-medium text-gray-900">{{ getFileName(currentBook.fileUrl) }}</p>
                     <p class="text-sm text-gray-600">
-                      <span v-if="currentBook.fileUrl">{{ getFileExtension(currentBook.fileUrl) }}</span>
+                      <span v-if="currentBook.fileUrl">{{
+                        getFileExtension(currentBook.fileUrl)
+                      }}</span>
                       <span v-if="currentBook.fileSize">
                         • {{ formatFileSize(currentBook.fileSize) }}
                       </span>
@@ -422,9 +426,13 @@ const deleteBook = async () => {
 }
 
 // Watcher temporal para depuración
-watch(currentBook, (newValue) => {
-  console.log('currentBook changed:', newValue)
-}, { deep: true })
+watch(
+  currentBook,
+  (newValue) => {
+    console.log('currentBook changed:', newValue)
+  },
+  { deep: true },
+)
 
 watch(loading, (newValue) => {
   console.log('loading changed:', newValue)

@@ -9,7 +9,7 @@ import type {
   UserStats,
   UserNotification,
   ActiveSession,
-  DepartmentInfo
+  DepartmentInfo,
 } from '@/types/profile'
 
 export const useProfileStore = defineStore('profile', () => {
@@ -23,8 +23,8 @@ export const useProfileStore = defineStore('profile', () => {
   const error = ref<string | null>(null)
 
   // Computed
-  const unreadNotificationsCount = computed(() => 
-    Array.isArray(notifications.value) ? notifications.value.filter(n => !n.read).length : 0
+  const unreadNotificationsCount = computed(() =>
+    Array.isArray(notifications.value) ? notifications.value.filter((n) => !n.read).length : 0,
   )
 
   const userRole = computed(() => profile.value?.role || '')
@@ -121,7 +121,7 @@ export const useProfileStore = defineStore('profile', () => {
   async function markNotificationAsRead(notificationId: number) {
     try {
       await profileService.markNotificationAsRead(notificationId)
-      const notification = notifications.value.find(n => n.id === notificationId)
+      const notification = notifications.value.find((n) => n.id === notificationId)
       if (notification) {
         notification.read = true
       }
@@ -149,7 +149,7 @@ export const useProfileStore = defineStore('profile', () => {
   async function closeRemoteSession(sessionId: string) {
     try {
       await profileService.closeRemoteSession(sessionId)
-      activeSessions.value = activeSessions.value.filter(s => s.id !== sessionId)
+      activeSessions.value = activeSessions.value.filter((s) => s.id !== sessionId)
     } catch (err: any) {
       error.value = err.message || 'Error al cerrar la sesión'
       throw err
@@ -212,6 +212,6 @@ export const useProfileStore = defineStore('profile', () => {
     closeRemoteSession,
     fetchDepartmentInfo,
     clearError,
-    reset
+    reset,
   }
 })

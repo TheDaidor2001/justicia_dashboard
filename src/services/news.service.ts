@@ -173,6 +173,7 @@ export const newsService = {
 
     const formData = new FormData()
     formData.append('title', dto.title)
+    if (dto.subtitle) formData.append('subtitle', dto.subtitle)
     formData.append('content', dto.content)
     formData.append('type', dto.type)
     if (dto.image) formData.append('image', dto.image)

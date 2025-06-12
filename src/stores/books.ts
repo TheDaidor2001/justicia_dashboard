@@ -104,7 +104,7 @@ export const useBooksStore = defineStore('books', () => {
       } else {
         books.value = []
       }
-      
+
       pagination.value = {
         page: response.page || 1,
         limit: response.limit || 20,
@@ -127,7 +127,7 @@ export const useBooksStore = defineStore('books', () => {
 
       const book = await booksService.getBookById(id)
       console.log('Book from service:', book)
-      
+
       currentBook.value = book
 
       return book
@@ -145,7 +145,7 @@ export const useBooksStore = defineStore('books', () => {
       error.value = null
 
       const newBook = await booksService.createBook(bookData)
-      
+
       // Solo agregar al array si es un objeto Book válido con ID
       if (newBook && typeof newBook === 'object' && 'id' in newBook) {
         books.value.unshift(newBook)
@@ -216,22 +216,22 @@ export const useBooksStore = defineStore('books', () => {
       // Primero intentar usar directamente la URL del archivo
       if (book.fileUrl) {
         let viewUrl = book.fileUrl
-        
+
         // Corregir URLs duplicadas (temporal mientras se arregla el backend)
         // Buscar y corregir la duplicación de /books/files/books/files/
         if (viewUrl.includes('/books/files/books/files/')) {
           console.log('Fixing duplicated path in URL')
           viewUrl = viewUrl.replace('/books/files/books/files/', '/books/files/')
         }
-        
+
         console.log('Opening URL:', viewUrl)
         window.open(viewUrl, '_blank')
         return
       }
-      
+
       // Si no hay fileUrl, intentar obtener URL del backend
       const downloadInfo = await booksService.downloadBook(book.id)
-      
+
       if (downloadInfo && downloadInfo.url) {
         window.open(downloadInfo.url, '_blank')
       } else {

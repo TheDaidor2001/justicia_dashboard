@@ -79,6 +79,7 @@ export interface RejectNewsDto {
 
 export interface CourtSubmissionDto {
   title: string
+  subtitle?: string
   content: string
   type: 'aviso' | 'comunicado' // Solo estos dos tipos desde juzgados
   image?: File
@@ -141,11 +142,17 @@ export interface NewsApprovalHistory {
     | 'submit_to_director'
     | 'submit_to_president'
     | 'submit_from_court'
+    | 'court_submission'
   comments?: string
   createdAt: string
   fromStatus?: string | null
   toStatus?: string
-  user: {
+  user?: {
+    id: string
+    fullName: string
+    role: string
+  }
+  fromUser?: {
     id: string
     fullName: string
     role: string

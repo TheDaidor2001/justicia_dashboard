@@ -131,7 +131,7 @@ import Badge from 'primevue/badge'
 import UserRoleBadge from '@/components/users/UserRoleBadge.vue'
 import UserQuickInfo from '@/components/users/UserQuickInfo.vue'
 import { useUsers } from '@/composables/useUsers'
-import type { User } from '@/types/user'
+import type { User, Department } from '@/types/user'
 import { formatDepartmentForDisplay } from '@/utils'
 
 interface Props {
@@ -174,7 +174,7 @@ const {
 const selectedUser = ref<string | undefined>(props.modelValue)
 
 const filteredUsers = computed(() => {
-  let users = assignableUsers.value.filter((user) => {
+  let users = assignableUsers.value.filter((user: User) => {
     // Filtrar por módulo
     if (props.forModule && !isUserAssignable(user, props.forModule)) {
       return false
@@ -194,7 +194,7 @@ const filteredUsers = computed(() => {
   })
 
   // Ordenar por carga de trabajo (menor a mayor) y luego por nombre
-  return users.sort((a, b) => {
+  return users.sort((a: User, b: User) => {
     const workloadA = a.carga_trabajo || 0
     const workloadB = b.carga_trabajo || 0
 
@@ -210,9 +210,9 @@ const groupedUsers = computed(() => {
   const groups = new Map<string, { department: any; users: User[] }>()
 
   // Agrupar usuarios por departamento
-  filteredUsers.value.forEach((user) => {
+  filteredUsers.value.forEach((user: User) => {
     const deptId = user.departamento_id
-    const department = departments.value.find((d) => d.id === deptId)
+    const department = departments.value.find((d: Department) => d.id === deptId)
 
     if (!groups.has(deptId)) {
       const departmentName = department
@@ -244,7 +244,7 @@ const groupedUsers = computed(() => {
 
 const selectedUserData = computed(() => {
   if (!selectedUser.value) return null
-  return assignableUsers.value.find((user) => user.id === selectedUser.value) || null
+  return assignableUsers.value.find((user: User) => user.id === selectedUser.value) || null
 })
 
 const emptyMessage = computed(() => {

@@ -46,6 +46,7 @@ const {
   setTypeFilter,
   setStatusFilter,
   setSearchFilter,
+  setPage,
   navigateToCreate,
   navigateToEdit,
   navigateToDetail,
@@ -130,8 +131,10 @@ const loadDataIfNeeded = async () => {
   // Si no se refrescó y la lista está vacía, hacer carga inicial
   if (!wasRefreshed && newsList.value.length === 0) {
     refreshNews()
-    await fetchStatistics()
   }
+
+  // Las estadísticas ahora se calculan automáticamente desde los datos locales
+  // No necesitamos cargar del backend
 }
 
 // Ya no necesitamos el watcher de needsRefresh porque eliminamos directamente de la lista
@@ -148,12 +151,12 @@ onActivated(async () => {
 
 // Métodos
 const onSearch = () => {
-  setSearchFilter(searchTerm.value)
+  setSearchFilter(searchTerm.value.trim())
 }
 
 const onSearchInput = () => {
   // El debounce se maneja en el composable
-  setSearchFilter(searchTerm.value)
+  setSearchFilter(searchTerm.value.trim())
 }
 
 const onTypeChange = () => {
@@ -164,12 +167,23 @@ const onStatusChange = () => {
   setStatusFilter(selectedStatus.value || undefined)
 }
 
+const clearSearch = () => {
+  searchTerm.value = ''
+  setSearchFilter('')
+}
+
 const viewNews = (news: News) => {
   navigateToDetail(news.id)
 }
 
 const editNews = (news: News) => {
   navigateToEdit(news.id)
+}
+
+// Manejar cambio de página
+const onPageChange = (event: any) => {
+  const newPage = event.page + 1
+  setPage(newPage)
 }
 
 const confirmDelete = (news: News) => {
@@ -327,10 +341,21 @@ const hasImage = (news: News) => {
                 </InputIcon>
                 <InputText
                   v-model="searchTerm"
-                  placeholder="Buscar por título..."
+                  placeholder="Buscar por título o contenido..."
                   class="w-80"
                   @input="onSearchInput"
                   @keyup.enter="onSearch"
+                />
+                <Button
+                  v-if="searchTerm"
+                  icon="pi pi-times"
+                  severity="secondary"
+                  text
+                  rounded
+                  size="small"
+                  @click="clearSearch"
+                  class="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  v-tooltip.top="'Limpiar búsqueda'"
                 />
               </IconField>
 
@@ -408,8 +433,11 @@ const hasImage = (news: News) => {
           :value="newsList"
           :loading="loading"
           :paginator="true"
-          :rows="10"
+          :lazy="true"
+          :rows="pagination.limit"
           :totalRecords="pagination.total"
+          :first="(pagination.page - 1) * pagination.limit"
+          @page="onPageChange($event)"
           stripedRows
           showGridlines
           responsiveLayout="scroll"

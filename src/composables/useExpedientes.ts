@@ -1,65 +1,75 @@
 import { computed, onMounted, watch } from 'vue'
 import { useExpedientesStore } from '@/stores/expedientes'
 import { useAuth } from '@/composables/useAuth'
-import type { ExpedienteFilters, ExpedienteStatus, Expediente } from '@/types/expediente'
+import type { ExpedienteFilters, Expediente } from '@/types/expediente'
+import { ExpedienteStatus } from '@/types/expediente'
 
 export const useExpedientes = () => {
   const expedientesStore = useExpedientesStore()
   const { user, isJuez, isPresidenteAudiencia, isSecretarioGeneral } = useAuth()
 
-  // Cargar expedientes al montar
+  // Cargar expedientes al montar con filtros específicos del rol
   onMounted(() => {
-    expedientesStore.fetchExpedientes()
+    const roleBasedFilters = getRoleBasedFilters()
+    expedientesStore.fetchExpedientes(roleBasedFilters)
   })
 
-  // Filtrar expedientes según el rol del usuario
-  const filteredExpedientes = computed(() => {
-    if (!user.value) return []
+  // Obtener filtros basados en el rol del usuario
+  const getRoleBasedFilters = (): ExpedienteFilters => {
+    if (!user.value) return {}
 
-    let filtered = [...expedientesStore.expedientes]
+    const baseFilters: ExpedienteFilters = {}
 
-    // FILTRADO POR ROL
     if (isJuez.value) {
       // Los jueces solo ven sus propios expedientes
-      filtered = filtered.filter((exp) => exp.createdBy === user.value!.id)
+      baseFilters.createdBy = user.value.id
     } else if (isPresidenteAudiencia.value) {
       // Los presidentes solo ven expedientes pendientes de su departamento
-      filtered = filtered.filter(
-        (exp) =>
-          exp.status === 'pending_approval' &&
-          exp.currentLevel === 'presidente_audiencia' &&
-          exp.departmentId === user.value!.departmentId &&
-          exp.createdBy !== user.value!.id, // No puede ver los que él creó
-      )
+      baseFilters.status = ExpedienteStatus.PENDING_APPROVAL
+      baseFilters.departmentId = user.value.departmentId
+      // El filtro de currentLevel y createdBy se maneja en el backend
     } else if (isSecretarioGeneral.value) {
       // El secretario solo ve expedientes pendientes en su nivel
-      filtered = filtered.filter(
-        (exp) => exp.status === 'pending_approval' && exp.currentLevel === 'secretario_general',
-      )
+      baseFilters.status = ExpedienteStatus.PENDING_APPROVAL
+      // El filtro de currentLevel se maneja en el backend
     }
-    // Los admin ven todo sin filtros
+    // Los admin ven todo sin filtros adicionales
 
-    return filtered
-  })
+    return baseFilters
+  }
 
-  // Métodos para cambiar filtros
+  // Los expedientes ahora vienen ya filtrados del servidor
+  const filteredExpedientes = computed(() => expedientesStore.expedientes)
+
+  // Métodos para cambiar filtros (preservando filtros de rol)
   const setStatusFilter = (status: ExpedienteStatus | undefined) => {
-    expedientesStore.setFilters({ status, page: 1 })
+    const roleFilters = getRoleBasedFilters()
+    const newFilters = { ...roleFilters, status, page: 1 }
+    expedientesStore.setFilters(newFilters)
     expedientesStore.fetchExpedientes()
   }
 
   const setSearchFilter = (search: string) => {
-    expedientesStore.setFilters({ search, page: 1 })
+    const roleFilters = getRoleBasedFilters()
+    const newFilters = { ...roleFilters, search, page: 1 }
+    expedientesStore.setFilters(newFilters)
     expedientesStore.fetchExpedientes()
   }
 
   const setPage = (page: number) => {
-    expedientesStore.setFilters({ page })
+    console.log('=== DEBUG setPage ===')
+    console.log('Cambiando a página:', page)
+    const roleFilters = getRoleBasedFilters()
+    const currentFilters = expedientesStore.filters
+    const newFilters = { ...roleFilters, ...currentFilters, page }
+    console.log('Filtros para nueva página:', newFilters)
+    expedientesStore.setFilters(newFilters)
     expedientesStore.fetchExpedientes()
   }
 
   const refreshExpedientes = () => {
-    expedientesStore.fetchExpedientes()
+    const roleFilters = getRoleBasedFilters()
+    expedientesStore.fetchExpedientes(roleFilters)
   }
 
   // Verificar si puede editar un expediente
@@ -164,8 +174,8 @@ export const useExpedientes = () => {
     pagination: computed(() => expedientesStore.pagination),
     filters: computed(() => expedientesStore.filters),
 
-    // Estadísticas usando expedientes filtrados
-    totalExpedientes: computed(() => filteredExpedientes.value.length),
+    // Estadísticas usando datos de paginación del servidor
+    totalExpedientes: computed(() => expedientesStore.pagination.total),
     expedientesPendientes: computed(() =>
       filteredExpedientes.value.filter((e) => e.status === 'pending_approval'),
     ),

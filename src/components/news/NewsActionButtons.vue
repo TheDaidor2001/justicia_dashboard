@@ -44,7 +44,7 @@ const availableActions = computed(() => {
     actions.push({
       key: 'edit',
       label: 'Editar',
-      icon: 'pi-pencil',
+      icon: 'pi pi-pencil',
       severity: 'secondary',
       outlined: true,
       action: () => emit('edit'),
@@ -56,7 +56,7 @@ const availableActions = computed(() => {
     actions.push({
       key: 'submit-to-director',
       label: 'Enviar para Revisión',
-      icon: 'pi-send',
+      icon: 'pi pi-send',
       severity: 'info',
       action: () => emit('submit-to-director'),
     })
@@ -68,7 +68,7 @@ const availableActions = computed(() => {
       key: 'approve-director',
       label:
         props.news.type === 'noticia' ? 'Aprobar y Enviar al Presidente' : 'Aprobar y Publicar',
-      icon: 'pi-check',
+      icon: 'pi pi-check',
       severity: 'success',
       action: () => emit('approve-director'),
     })
@@ -79,7 +79,7 @@ const availableActions = computed(() => {
     actions.push({
       key: 'approve-president',
       label: 'Aprobar y Publicar',
-      icon: 'pi-verified',
+      icon: 'pi pi-verified',
       severity: 'success',
       action: () => emit('approve-president'),
     })
@@ -90,7 +90,7 @@ const availableActions = computed(() => {
     actions.push({
       key: 'reject',
       label: 'Rechazar',
-      icon: 'pi-times',
+      icon: 'pi pi-times',
       severity: 'danger',
       outlined: true,
       action: () => emit('reject'),
@@ -102,7 +102,7 @@ const availableActions = computed(() => {
     actions.push({
       key: 'delete',
       label: 'Eliminar',
-      icon: 'pi-trash',
+      icon: 'pi pi-trash',
       severity: 'danger',
       outlined: true,
       action: () => emit('delete'),
@@ -131,7 +131,7 @@ const getPrimaryActionContext = computed(() => {
     return {
       title: 'Enviar para Revisión',
       description: 'La noticia será enviada al Director de Prensa para su revisión',
-      icon: 'pi-send',
+      icon: 'pi pi-send',
       color: 'info',
     }
   }
@@ -141,14 +141,14 @@ const getPrimaryActionContext = computed(() => {
       return {
         title: 'Aprobar y Enviar al Presidente',
         description: 'La noticia será enviada al Presidente CSPJ para aprobación final',
-        icon: 'pi-check',
+        icon: 'pi pi-check',
         color: 'success',
       }
     } else {
       return {
         title: 'Aprobar y Publicar',
         description: `El ${props.news.type} será publicado inmediatamente (flujo simplificado)`,
-        icon: 'pi-check',
+        icon: 'pi pi-check',
         color: 'success',
       }
     }
@@ -158,7 +158,7 @@ const getPrimaryActionContext = computed(() => {
     return {
       title: 'Aprobar y Publicar',
       description: 'La noticia será publicada inmediatamente tras la aprobación',
-      icon: 'pi-verified',
+      icon: 'pi pi-verified',
       color: 'success',
     }
   }
@@ -251,5 +251,133 @@ const getPrimaryActionContext = computed(() => {
 <style scoped>
 .news-action-buttons {
   min-height: 100px;
+}
+
+/* Estilos para asegurar que los botones tengan texto blanco visible */
+:deep(.p-button) {
+  &.p-button-secondary {
+    color: white !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+
+    &:hover {
+      color: white !important;
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+    }
+
+    &:focus {
+      color: white !important;
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      background-color: #6c757d !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-info {
+    color: white !important;
+
+    &:hover {
+      color: white !important;
+    }
+
+    &:focus {
+      color: white !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-success {
+    color: white !important;
+
+    &:hover {
+      color: white !important;
+    }
+
+    &:focus {
+      color: white !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-danger {
+    color: white !important;
+
+    &:hover {
+      color: white !important;
+    }
+
+    &:focus {
+      color: white !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-outlined {
+    &.p-button-secondary {
+      color: #6c757d !important;
+      background-color: transparent !important;
+      border-color: #6c757d !important;
+
+      &:hover {
+        color: white !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+      }
+
+      &:focus {
+        color: white !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+      }
+
+      &:disabled {
+        color: #6c757d !important;
+        background-color: transparent !important;
+        opacity: 0.6;
+      }
+    }
+
+    &.p-button-danger {
+      color: #dc3545 !important;
+      background-color: transparent !important;
+      border-color: #dc3545 !important;
+
+      &:hover {
+        color: white !important;
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+      }
+
+      &:focus {
+        color: white !important;
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+      }
+
+      &:disabled {
+        color: #dc3545 !important;
+        background-color: transparent !important;
+        opacity: 0.6;
+      }
+    }
+  }
 }
 </style>

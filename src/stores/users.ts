@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import type {
   User,
   UserFilters,
-  Pagination,
+  UserPagination,
   UserListResponse,
   CreateUserRequest,
   UpdateUserRequest,
@@ -20,6 +20,7 @@ export const useUserStore = defineStore('users', () => {
   const departments = ref<Department[]>([])
 
   const filters = ref<UserFilters>({
+    page: 1,
     search: '',
     departamento_id: '',
     rol: undefined,
@@ -27,7 +28,7 @@ export const useUserStore = defineStore('users', () => {
     es_asignable: undefined,
   })
 
-  const pagination = ref<Pagination>({
+  const pagination = ref<UserPagination>({
     page: 1,
     limit: 10,
     total: 0,
@@ -42,42 +43,13 @@ export const useUserStore = defineStore('users', () => {
 
   const adminUsers = computed(() => users.value.filter((user) => user.rol === 'admin'))
 
-  const filteredUsers = computed(() => {
-    let filtered = users.value
-
-    if (filters.value.search) {
-      const search = filters.value.search.toLowerCase()
-      filtered = filtered.filter(
-        (user) =>
-          (user.nombre || '').toLowerCase().includes(search) ||
-          user.email.toLowerCase().includes(search) ||
-          user.dni.includes(search),
-      )
-    }
-
-    if (filters.value.departamento_id) {
-      filtered = filtered.filter((user) => user.departamento_id === filters.value.departamento_id)
-    }
-
-    if (filters.value.rol) {
-      filtered = filtered.filter((user) => user.rol === filters.value.rol)
-    }
-
-    if (filters.value.estado) {
-      filtered = filtered.filter((user) => user.estado === filters.value.estado)
-    }
-
-    if (filters.value.es_asignable !== undefined) {
-      filtered = filtered.filter((user) => user.es_asignable === filters.value.es_asignable)
-    }
-
-    return filtered
-  })
+  // Los usuarios ahora vienen ya filtrados del servidor
+  const filteredUsers = computed(() => users.value)
 
   // Acciones
   const fetchUsers = async (
     customFilters?: UserFilters,
-    customPagination?: Partial<Pagination>,
+    customPagination?: Partial<UserPagination>,
   ) => {
     try {
       loading.value = true
@@ -163,15 +135,15 @@ export const useUserStore = defineStore('users', () => {
       const user = users.value.find((u) => u.id === id)
       if (!user) throw new Error('Usuario no encontrado')
 
-      // Determinar el estado actual - verificar tanto 'estado' como 'isActive'
-      const currentStatus = user.estado ? user.estado === 'activo' : user.isActive === true
+      // Determinar el estado actual
+      const currentStatus = user.estado === 'activo'
 
       // Validaciones antes de desactivar
       if (currentStatus) {
         // Verificar que no sea el único admin
-        if (user.rol === 'admin' || user.role === 'admin') {
+        if (user.rol === 'admin') {
           const activeAdmins = adminUsers.value.filter((u) => {
-            const isActive = u.estado ? u.estado === 'activo' : u.isActive === true
+            const isActive = u.estado === 'activo'
             return isActive && u.id !== id
           })
           if (activeAdmins.length === 0) {
@@ -188,12 +160,12 @@ export const useUserStore = defineStore('users', () => {
       }
 
       console.log('Toggling user status:', { id, currentStatus })
-      
+
       const response = await userService.toggleUserStatus(id, currentStatus)
       console.log('Toggle response:', response)
-      
+
       // Extraer el usuario de la respuesta si viene envuelto
-      const updatedUser = response.data || response
+      const updatedUser = response as User
       console.log('Updated user:', updatedUser)
 
       const index = users.value.findIndex((u) => u.id === id)
@@ -329,21 +301,7 @@ export const useUserStore = defineStore('users', () => {
     }
   }
 
-  const setFilters = (newFilters: Partial<UserFilters>) => {
-    filters.value = { ...filters.value, ...newFilters }
-  }
-
-  const resetFilters = () => {
-    filters.value = {
-      search: '',
-      departamento_id: '',
-      rol: undefined,
-      estado: undefined,
-      es_asignable: undefined,
-    }
-  }
-
-  const setPagination = (newPagination: Partial<Pagination>) => {
+  const setPagination = (newPagination: Partial<UserPagination>) => {
     pagination.value = { ...pagination.value, ...newPagination }
   }
 
@@ -370,6 +328,26 @@ export const useUserStore = defineStore('users', () => {
 
   const clearCurrentUser = () => {
     currentUser.value = null
+  }
+
+  // Métodos para manejar filtros
+  const setFilters = (newFilters: Partial<UserFilters>) => {
+    filters.value = { ...filters.value, ...newFilters }
+  }
+
+  const resetFilters = () => {
+    filters.value = {
+      page: 1,
+      search: '',
+      departamento_id: undefined,
+      rol: undefined,
+      estado: undefined,
+      es_asignable: undefined,
+    }
+  }
+
+  const setPage = (page: number) => {
+    pagination.value.page = page
   }
 
   return {
@@ -403,6 +381,7 @@ export const useUserStore = defineStore('users', () => {
     exportUsers,
     setFilters,
     resetFilters,
+    setPage,
     setPagination,
     clearError,
     clearCurrentUser,

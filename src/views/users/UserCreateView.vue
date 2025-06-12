@@ -199,7 +199,7 @@ import { useVuelidate } from '@vuelidate/core'
 import { required, email, minLength, sameAs, helpers } from '@vuelidate/validators'
 import { useUserStore } from '@/stores/users'
 import { useToast } from 'primevue/usetoast'
-import type { UserRole, CreateUserRequest } from '@/types/user'
+import type { UserRoleType, CreateUserRequest, Department } from '@/types/user'
 import { USER_ROLE_LABELS } from '@/types/user'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -220,7 +220,7 @@ const userForm = ref({
   dni: '',
   nombre: '',
   telefono: '',
-  rol: '' as UserRole | '',
+  rol: '' as UserRoleType | '',
   departamento_id: '',
   password: '',
   confirmPassword: '',
@@ -326,7 +326,7 @@ const $v = useVuelidate(validationRules, userForm)
 
 const departments = computed(() => {
   return (
-    userStore.departments?.map((dept) => ({
+    userStore.departments?.map((dept: Department) => ({
       id: dept.id,
       name: dept.nombre || dept.name || `Departamento ${dept.id}`,
       label: dept.nombre || dept.name || `Departamento ${dept.id}`,
@@ -374,7 +374,7 @@ const createUser = async () => {
       dni: userForm.value.dni,
       nombre: userForm.value.nombre,
       telefono: userForm.value.telefono || undefined,
-      rol: userForm.value.rol as UserRole,
+      rol: userForm.value.rol as UserRoleType,
       departamento_id: userForm.value.departamento_id,
       password: userForm.value.password,
     }

@@ -145,7 +145,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/users'
 import { userService } from '@/services/user.service'
 import { useToast } from 'primevue/usetoast'
-import type { UserRole, UpdateUserRequest } from '@/types/user'
+import type { UserRoleType, UpdateUserRequest, Department } from '@/types/user'
 import { USER_ROLE_LABELS } from '@/types/user'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -167,7 +167,7 @@ const userForm = ref({
   dni: '',
   nombre: '',
   telefono: '',
-  rol: '' as UserRole | '',
+  rol: '' as UserRoleType | '',
   departamento_id: '',
 })
 
@@ -198,7 +198,7 @@ watch(
 
 const departments = computed(() => {
   return (
-    userStore.departments?.map((dept) => ({
+    userStore.departments?.map((dept: Department) => ({
       id: dept.id,
       name: dept.nombre || dept.name || `Departamento ${dept.id}`,
       label: dept.nombre || dept.name || `Departamento ${dept.id}`,
@@ -210,18 +210,18 @@ const loadUser = async () => {
   try {
     loading.value = true
     const response = await userService.getUserById(userId.value)
-    
-    // Extraer el usuario de la respuesta (puede venir como response.data)
-    const userData = response.data || response
-    
+
+    // Extraer el usuario de la respuesta
+    const userData = response
+
     console.log('User data loaded:', userData)
 
     userForm.value.email = userData.email
     userForm.value.dni = userData.dni
-    userForm.value.nombre = userData.fullName || userData.nombre || ''
-    userForm.value.telefono = userData.phone || userData.telefono || ''
-    userForm.value.rol = userData.role || userData.rol || ''
-    userForm.value.departamento_id = userData.departmentId || userData.departamento_id || ''
+    userForm.value.nombre = userData.nombre || ''
+    userForm.value.telefono = userData.telefono || ''
+    userForm.value.rol = userData.rol || ''
+    userForm.value.departamento_id = userData.departamento_id || ''
   } catch (error: any) {
     console.error('Error al cargar usuario:', error)
     toast.add({
@@ -262,7 +262,7 @@ const saveUser = async () => {
     const updateData: UpdateUserRequest = {
       nombre: userForm.value.nombre,
       telefono: userForm.value.telefono || undefined,
-      rol: userForm.value.rol as UserRole,
+      rol: userForm.value.rol as UserRoleType,
       departamento_id: userForm.value.departamento_id,
     }
 

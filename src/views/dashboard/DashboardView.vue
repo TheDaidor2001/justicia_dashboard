@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { useExpedientesStore } from '@/stores/expedientes'
 import { useNewsStore } from '@/stores/news'
 import { useBooksStore } from '@/stores/books'
+import { useContactStore } from '@/stores/contact'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Avatar from 'primevue/avatar'
@@ -17,6 +18,7 @@ const toast = useToast()
 const expedientesStore = useExpedientesStore()
 const newsStore = useNewsStore()
 const booksStore = useBooksStore()
+const contactStore = useContactStore()
 
 // Estado
 const currentTime = ref(new Date())
@@ -27,6 +29,8 @@ const stats = ref({
   noticiasTotal: 0,
   noticiasPendientes: 0,
   librosTotal: 0,
+  contactosTotal: 0,
+  contactosPendientes: 0,
 })
 
 // Saludo según la hora del día
@@ -41,7 +45,7 @@ const greeting = computed(() => {
 const userInitials = computed(() => {
   const names = userName.value.split(' ')
   return names
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2)
@@ -137,12 +141,14 @@ const dashboardLinks = computed(() => {
         },
         {
           id: 'contactos',
-          title: 'Mensajes Ciudadanos',
-          description: 'Gestionar consultas',
+          title: 'Contacto Ciudadano',
+          description: 'Gestionar consultas ciudadanas',
           icon: 'pi-envelope',
           color: 'orange',
-          route: '/contactos',
-          available: false,
+          route: '/contacto',
+          available: true,
+          stats: stats.value.contactosTotal,
+          badge: stats.value.contactosPendientes > 0 ? 'Pendientes' : null,
         },
       )
       break
@@ -150,12 +156,14 @@ const dashboardLinks = computed(() => {
     case 'secretario_adjunto':
       links.unshift({
         id: 'contactos',
-        title: 'Mensajes Ciudadanos',
-        description: 'Gestionar y responder consultas',
+        title: 'Contacto Ciudadano',
+        description: 'Asignar y gestionar consultas',
         icon: 'pi-envelope',
         color: 'orange',
-        route: '/contactos',
-        available: false,
+        route: '/contacto',
+        available: true,
+        stats: stats.value.contactosTotal,
+        badge: stats.value.contactosPendientes > 0 ? 'Pendientes' : null,
       })
       break
 
@@ -197,6 +205,16 @@ const dashboardLinks = computed(() => {
           badge: stats.value.noticiasPendientes > 0 ? 'Pendientes' : null,
         },
         {
+          id: 'contactos',
+          title: 'Contacto Ciudadano',
+          description: 'Supervisar consultas ciudadanas',
+          icon: 'pi-envelope',
+          color: 'orange',
+          route: '/contacto',
+          available: true,
+          stats: stats.value.contactosTotal,
+        },
+        {
           id: 'administracion',
           title: 'Administración',
           description: 'Configuración del sistema',
@@ -228,6 +246,17 @@ const dashboardLinks = computed(() => {
           route: '/noticias',
           available: true,
           stats: stats.value.noticiasTotal,
+        },
+        {
+          id: 'contactos',
+          title: 'Contacto Ciudadano',
+          description: 'Gestión completa de consultas',
+          icon: 'pi-envelope',
+          color: 'orange',
+          route: '/contacto',
+          available: true,
+          stats: stats.value.contactosTotal,
+          badge: stats.value.contactosPendientes > 0 ? 'Pendientes' : null,
         },
         {
           id: 'usuarios',
@@ -310,6 +339,26 @@ const loadStats = async () => {
         stats.value.librosTotal = booksStore.books.length
       } catch (error) {
         console.error('Error al cargar estadísticas de libros:', error)
+      }
+    }
+
+    // Cargar estadísticas de contacto (para roles con acceso)
+    const contactRoles = [
+      'secretario_adjunto',
+      'secretario_general',
+      'presidente_cspj',
+      'vicepresidente_cspj',
+      'admin',
+    ]
+    if (contactRoles.includes(userRole.value || '')) {
+      try {
+        await contactStore.fetchStatistics()
+        if (contactStore.statistics) {
+          stats.value.contactosTotal = contactStore.statistics.total || 0
+          stats.value.contactosPendientes = contactStore.statistics.pending || 0
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas de contacto:', error)
       }
     }
   } catch (error) {

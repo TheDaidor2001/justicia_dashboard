@@ -1,9 +1,7 @@
 <template>
   <div class="sessions-section">
     <div class="mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-        Sesiones Activas
-      </h2>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Sesiones Activas</h2>
       <p class="text-gray-600 dark:text-gray-400">
         Gestiona tus sesiones abiertas en diferentes dispositivos
       </p>
@@ -25,7 +23,7 @@
             <div class="session-icon">
               <i :class="getDeviceIcon(session.device)" class="text-lg"></i>
             </div>
-            
+
             <div>
               <h3 class="text-sm font-medium text-gray-900 dark:text-white">
                 {{ session.device }}
@@ -45,7 +43,7 @@
               </p>
             </div>
           </div>
-          
+
           <div class="flex items-center gap-2">
             <Button
               v-if="!session.isCurrent"
@@ -64,12 +62,8 @@
 
     <div v-else-if="!loading" class="text-center py-8">
       <i class="pi pi-desktop text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        Sin sesiones activas
-      </h3>
-      <p class="text-gray-600 dark:text-gray-400">
-        No hay sesiones activas registradas
-      </p>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Sin sesiones activas</h3>
+      <p class="text-gray-600 dark:text-gray-400">No hay sesiones activas registradas</p>
     </div>
 
     <Message v-if="profileStore.error" severity="error" class="mt-4">
@@ -105,17 +99,8 @@
         </p>
       </div>
       <template #footer>
-        <Button
-          label="Cancelar"
-          outlined
-          @click="showConfirmDialog = false"
-        />
-        <Button
-          label="Cerrar Sesión"
-          severity="danger"
-          @click="closeSession"
-          :loading="loading"
-        />
+        <Button label="Cancelar" outlined @click="showConfirmDialog = false" />
+        <Button label="Cerrar Sesión" severity="danger" @click="closeSession" :loading="loading" />
       </template>
     </Dialog>
   </div>
@@ -174,7 +159,7 @@ async function closeSession() {
 
 function getDeviceIcon(device: string): string {
   const deviceLower = device.toLowerCase()
-  
+
   if (deviceLower.includes('mobile') || deviceLower.includes('phone')) {
     return 'pi pi-mobile text-blue-600'
   } else if (deviceLower.includes('tablet') || deviceLower.includes('ipad')) {
@@ -188,7 +173,7 @@ function formatDateTime(timestamp: string): string {
   const date = new Date(timestamp)
   const now = new Date()
   const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-  
+
   if (diffInHours < 1) {
     const diffInMinutes = Math.floor(diffInHours * 60)
     return `Hace ${diffInMinutes} minutos`

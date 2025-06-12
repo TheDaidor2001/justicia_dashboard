@@ -44,6 +44,7 @@
                 v-model="searchQuery"
                 placeholder="Nombre, email o DNI..."
                 class="w-full"
+                @input="handleSearch"
               />
             </IconField>
           </div>
@@ -56,6 +57,7 @@
               :options="roleOptions"
               option-label="label"
               option-value="value"
+              @change="handleRoleFilter(filters.rol)"
               placeholder="Todos los roles"
               class="w-full"
               show-clear
@@ -103,8 +105,12 @@
           v-else
           :value="filteredUsers"
           :loading="loading"
-          paginator
-          :rows="10"
+          :paginator="true"
+          :lazy="true"
+          :rows="pagination.limit"
+          :totalRecords="pagination.total"
+          :first="(pagination.page - 1) * pagination.limit"
+          @page="onPageChange($event)"
           class="p-datatable-sm"
           dataKey="id"
         >
@@ -200,7 +206,7 @@ import UserRoleBadge from '@/components/users/UserRoleBadge.vue'
 import UserStatusSwitch from '@/components/users/UserStatusSwitch.vue'
 import { useUsers } from '@/composables/useUsers'
 import { USER_ROLE_LABELS } from '@/types/user'
-import type { UserRole } from '@/types/user'
+import type { UserRoleType, User } from '@/types/user'
 
 const router = useRouter()
 const toast = useToast()
@@ -208,6 +214,7 @@ const { userRole } = useAuth()
 
 const {
   users,
+  filteredUsers,
   departments,
   filters,
   pagination,
@@ -222,6 +229,12 @@ const {
   setFilters,
   resetFilters,
   setPagination,
+  setSearchFilter,
+  setRoleFilter,
+  setStatusFilter,
+  setDepartmentFilter,
+  setPageFilter,
+  refreshUsers,
 } = useUsers()
 
 // Estado local
@@ -230,37 +243,15 @@ const searchQuery = ref('')
 // Opciones para filtros
 const roleOptions = computed(() => {
   return Object.entries(USER_ROLE_LABELS).map(([value, label]) => ({
-    value: value as UserRole,
+    value: value as UserRoleType,
     label,
   }))
 })
 
 // Filtrado local
-const filteredUsers = computed(() => {
-  let filtered = users.value || []
-
-  // Filtro de búsqueda
-  if (searchQuery.value) {
-    const search = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(
-      (user) =>
-        (user.nombre || '').toLowerCase().includes(search) ||
-        (user.email || '').toLowerCase().includes(search) ||
-        (user.dni || '').includes(search),
-    )
-  }
-
-  // Filtro por rol
-  if (filters.value.rol) {
-    filtered = filtered.filter((user) => user.rol === filters.value.rol)
-  }
-
-  return filtered
-})
-
 // Utilidades
-const getAvatarLabel = (user: any) => {
-  const name = user.nombre || user.fullName || ''
+const getAvatarLabel = (user: User) => {
+  const name = user.nombre || ''
   if (!name) return 'U'
 
   const names = name.split(' ')
@@ -286,9 +277,35 @@ const navigateToCreate = () => {
   router.push('/admin/usuarios/nuevo')
 }
 
+// Manejar cambio de página
+const onPageChange = (event: any) => {
+  const newPage = event.page + 1
+  setPageFilter(newPage)
+}
+
+// Buscar con debounce
+let searchTimeout: ReturnType<typeof setTimeout>
+const handleSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    setSearchFilter(searchQuery.value)
+  }, 500)
+}
+
+// Manejar cambio de filtro de rol
+const handleRoleFilter = (role: UserRoleType | undefined) => {
+  setRoleFilter(role)
+}
+
+// Manejar cambio de filtro de estado
+const handleStatusFilter = (status: 'activo' | 'inactivo' | undefined) => {
+  setStatusFilter(status)
+}
+
 const clearFilters = () => {
   searchQuery.value = ''
-  filters.value.rol = undefined
+  resetFilters()
+  refreshUsers()
 }
 
 const handleToggleStatus = async (user: any, newStatus: 'activo' | 'inactivo') => {

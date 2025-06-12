@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { documentsService } from '@/services/documents.service'
-import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE, formatFileSize } from '@/types/document'
+import { DOC_ALLOWED_FILE_TYPES, DOC_MAX_FILE_SIZE, formatFileSize } from '@/types/document'
 import FileUpload from 'primevue/fileupload'
 import Message from 'primevue/message'
 import ProgressBar from 'primevue/progressbar'
@@ -23,19 +23,19 @@ const uploadProgress = ref(0)
 
 // Generar string de tipos permitidos para el input
 const acceptedFileTypes = computed(() => {
-  return Object.keys(ALLOWED_FILE_TYPES).join(',')
+  return Object.keys(DOC_ALLOWED_FILE_TYPES).join(',')
 })
 
 // Validar archivo antes de subir
 const validateFile = (file: File): string | null => {
   // Validar tipo
-  if (!ALLOWED_FILE_TYPES[file.type as keyof typeof ALLOWED_FILE_TYPES]) {
+  if (!DOC_ALLOWED_FILE_TYPES[file.type as keyof typeof DOC_ALLOWED_FILE_TYPES]) {
     return `Tipo de archivo no permitido. Solo se permiten: PDF, DOC, DOCX, JPG, PNG, GIF`
   }
 
   // Validar tamaño
-  if (file.size > MAX_FILE_SIZE) {
-    return `El archivo excede el tamaño máximo permitido de ${formatFileSize(MAX_FILE_SIZE)}`
+  if (file.size > DOC_MAX_FILE_SIZE) {
+    return `El archivo excede el tamaño máximo permitido de ${formatFileSize(DOC_MAX_FILE_SIZE)}`
   }
 
   return null
@@ -138,7 +138,7 @@ const chooseLabel = computed(() => (uploading.value ? 'Subiendo...' : 'Seleccion
           <ul class="list-disc list-inside space-y-1">
             <li>Documentos: PDF, DOC, DOCX</li>
             <li>Imágenes: JPG, PNG, GIF</li>
-            <li>Tamaño máximo: {{ formatFileSize(MAX_FILE_SIZE) }}</li>
+            <li>Tamaño máximo: {{ formatFileSize(DOC_MAX_FILE_SIZE) }}</li>
           </ul>
         </div>
       </div>
@@ -148,7 +148,7 @@ const chooseLabel = computed(() => (uploading.value ? 'Subiendo...' : 'Seleccion
     <FileUpload
       mode="basic"
       :accept="acceptedFileTypes"
-      :maxFileSize="MAX_FILE_SIZE"
+      :maxFileSize="DOC_MAX_FILE_SIZE"
       :disabled="disabled || uploading"
       :chooseLabel="chooseLabel"
       :auto="true"

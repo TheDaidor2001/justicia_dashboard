@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed } from 'vue'
 import Card from 'primevue/card'
 import { useAuth } from '@/composables/useAuth'
-import { newsService } from '@/services/news.service'
-import { useNewsStore } from '@/stores/news'
 
 interface Props {
   total?: number
@@ -36,57 +34,13 @@ const emit = defineEmits<{
   viewPending: []
 }>()
 
-// Estado para noticias pendientes de aprobación
-const pendingApprovalCount = ref(0)
-const loadingPendingApproval = ref(false)
-
-// Protección contra cargas múltiples
-let lastLoadTime = 0
-const MIN_LOAD_INTERVAL = 10000 // 10 segundos mínimo entre cargas
-
-// Cargar cantidad de noticias pendientes de aprobación
-const loadPendingApprovalCount = async () => {
-  if (!isDirectorPrensa.value && !isPresidenteCspj.value) return
-
-  const now = Date.now()
-
-  // Evitar cargas demasiado frecuentes
-  if (now - lastLoadTime < MIN_LOAD_INTERVAL) {
-    return
-  }
-
-  // Evitar cargas múltiples simultáneas
-  if (loadingPendingApproval.value) {
-    return
-  }
-
-  lastLoadTime = now
-  loadingPendingApproval.value = true
-
-  try {
-    const response = await newsService.getNewsPendingApproval({ limit: 1 })
-    if (response.success) {
-      pendingApprovalCount.value = response.pagination.total
-    }
-  } catch (error: any) {
-    // Solo loggear errores que no sean de rate limiting
-    if (error.name !== 'ServiceRateLimitError' && error.name !== 'RateLimitError') {
-      console.error('Error loading pending approval count:', error)
-    }
-    pendingApprovalCount.value = 0
-  } finally {
-    loadingPendingApproval.value = false
-  }
-}
+// Calcular estadísticas localmente usando props
+const pendingApprovalCount = computed(() => {
+  if (!isDirectorPrensa.value && !isPresidenteCspj.value) return 0
+  return props.pending || 0
+})
 
 const { userRole, isAdmin } = useAuth()
-const newsStore = useNewsStore()
-
-// Ya no necesitamos el watcher de needsRefresh, las estadísticas se cargan cuando se navega
-
-onMounted(() => {
-  loadPendingApprovalCount()
-})
 
 const isTecnicoPrensa = computed(() => userRole.value === 'tecnico_prensa')
 const isDirectorPrensa = computed(() => userRole.value === 'director_prensa')
@@ -197,10 +151,7 @@ const getColorClasses = (color: string) => {
           </div>
           <div class="text-right">
             <div class="text-4xl font-bold text-orange-600">
-              <span v-if="loadingPendingApproval">
-                <i class="pi pi-spin pi-spinner text-2xl"></i>
-              </span>
-              <span v-else>{{ pendingApprovalCount }}</span>
+              {{ pendingApprovalCount }}
             </div>
             <div class="text-sm text-orange-700 font-medium">
               {{ pendingApprovalCount === 1 ? 'noticia pendiente' : 'noticias pendientes' }}
@@ -214,7 +165,7 @@ const getColorClasses = (color: string) => {
                 Ver Pendientes
               </button>
             </div>
-            <div v-else-if="!loadingPendingApproval" class="mt-2">
+            <div v-else class="mt-2">
               <div
                 class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium border border-green-200"
               >

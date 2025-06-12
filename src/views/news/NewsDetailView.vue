@@ -151,35 +151,105 @@ const generateBasicHistory = (): NewsApprovalHistory[] => {
 
   const history: NewsApprovalHistory[] = []
 
-  // Entrada de creación
+  // Obtener información del creador/autor original
+  const getCreatorInfo = () => {
+    // Prioridad: creator, author, usuario actual como fallback
+    const creator = news.value?.creator
+    const author = (news.value as any)?.author
+    const currentUser = user.value
+
+    // Intentar obtener datos del creador
+    if (creator && creator.fullName && creator.fullName !== 'Usuario desconocido' && creator.fullName.trim() !== '') {
+      return {
+        id: creator.id,
+        fullName: creator.fullName,
+        role: creator.role || 'tecnico_prensa',
+      }
+    }
+
+    // Intentar obtener datos del author
+    if (author && author.fullName && author.fullName !== 'Usuario desconocido' && author.fullName.trim() !== '') {
+      return {
+        id: author.id,
+        fullName: author.fullName,
+        role: (author as any).role || 'tecnico_prensa',
+      }
+    }
+
+    // Si no hay información específica del creador/autor, usar el usuario actual 
+    // (esto puede pasar cuando el usuario actual está viendo una noticia que creó)
+    if (currentUser && currentUser.fullName && currentUser.fullName.trim() !== '') {
+      return {
+        id: currentUser.id,
+        fullName: currentUser.fullName,
+        role: currentUser.role,
+      }
+    }
+
+    // Fallback final solo cuando realmente no hay información disponible
+    return {
+      id: 'system',
+      fullName: 'Sistema',
+      role: 'sistema',
+    }
+  }
+
+  // Obtener información del usuario que publicó (puede ser diferente al creador)
+  const getPublisherInfo = () => {
+    // Si hay información específica del publicador, usarla
+    const publisher = (news.value as any)?.publishedBy || (news.value as any)?.approvedBy
+    
+    if (publisher && publisher.fullName && publisher.fullName !== 'Usuario desconocido') {
+      return {
+        id: publisher.id,
+        fullName: publisher.fullName,
+        role: publisher.role || 'director_prensa',
+      }
+    }
+
+    // Si no hay info específica del publicador, usar el usuario actual si es apropiador
+    const currentUser = user.value
+    if (currentUser && (currentUser.role === 'director_prensa' || currentUser.role === 'presidente_cspj')) {
+      return {
+        id: currentUser.id,
+        fullName: currentUser.fullName,
+        role: currentUser.role,
+      }
+    }
+
+    // Fallback: Sistema
+    return {
+      id: 'system',
+      fullName: 'Sistema',
+      role: 'sistema',
+    }
+  }
+
+  const creatorInfo = getCreatorInfo()
+
+  // Entrada de creación - siempre por el creador original
   history.push({
     id: `${news.value.id}_create`,
     action: 'create',
-    user: news.value.creator || {
-      id: 'unknown',
-      fullName: 'Usuario desconocido',
-      role: 'unknown',
-    },
+    fromUser: creatorInfo,
     createdAt: news.value.createdAt,
     comments: 'Noticia creada',
     fromStatus: null,
-    toStatus: 'DRAFT',
+    toStatus: 'draft',
   })
 
-  // Si está publicada, agregar entrada de publicación
+  // Si está publicada, agregar entrada de publicación - por quien la publicó
   if (news.value.publishedAt) {
+    const publisherInfo = getPublisherInfo()
+    
     history.push({
       id: `${news.value.id}_publish`,
       action: 'publish',
-      user: news.value.creator || {
-        id: 'unknown',
-        fullName: 'Usuario desconocido',
-        role: 'unknown',
-      },
+      fromUser: publisherInfo,
       createdAt: news.value.publishedAt,
       comments: 'Noticia publicada',
-      fromStatus: 'APPROVED',
-      toStatus: 'PUBLISHED',
+      fromStatus: 'approved',
+      toStatus: 'published',
     })
   }
 
@@ -537,10 +607,11 @@ const formatDate = (date: string) => {
                           <Avatar
                             :label="
                               (
-                                (news as any).author?.fullName ||
-                                news.creator?.fullName ||
-                                user?.fullName ||
-                                'U'
+                                ((news as any).author?.fullName && (news as any).author.fullName !== 'Usuario desconocido') 
+                                  ? (news as any).author.fullName 
+                                  : (news.creator?.fullName && news.creator.fullName !== 'Usuario desconocido')
+                                    ? news.creator.fullName
+                                    : user?.fullName || 'Sistema'
                               )?.charAt(0)
                             "
                             shape="circle"
@@ -549,9 +620,11 @@ const formatDate = (date: string) => {
                           />
                           <span class="font-medium">
                             {{
-                              (news as any).author?.fullName ||
-                              news.creator?.fullName ||
-                              'Autor desconocido'
+                              ((news as any).author?.fullName && (news as any).author.fullName !== 'Usuario desconocido') 
+                                ? (news as any).author.fullName 
+                                : (news.creator?.fullName && news.creator.fullName !== 'Usuario desconocido')
+                                  ? news.creator.fullName
+                                  : user?.fullName || 'Sistema'
                             }}
                           </span>
                         </div>
@@ -735,6 +808,134 @@ const formatDate = (date: string) => {
     padding-left: 1em;
     margin: 1em 0;
     color: #6b7280;
+  }
+}
+
+/* Estilos para asegurar que los botones tengan texto blanco visible */
+:deep(.p-button) {
+  &.p-button-secondary {
+    color: white !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+
+    &:hover {
+      color: white !important;
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+    }
+
+    &:focus {
+      color: white !important;
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      background-color: #6c757d !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-info {
+    color: white !important;
+
+    &:hover {
+      color: white !important;
+    }
+
+    &:focus {
+      color: white !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-success {
+    color: white !important;
+
+    &:hover {
+      color: white !important;
+    }
+
+    &:focus {
+      color: white !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-danger {
+    color: white !important;
+
+    &:hover {
+      color: white !important;
+    }
+
+    &:focus {
+      color: white !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-outlined {
+    &.p-button-secondary {
+      color: #6c757d !important;
+      background-color: transparent !important;
+      border-color: #6c757d !important;
+
+      &:hover {
+        color: white !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+      }
+
+      &:focus {
+        color: white !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+      }
+
+      &:disabled {
+        color: #6c757d !important;
+        background-color: transparent !important;
+        opacity: 0.6;
+      }
+    }
+
+    &.p-button-danger {
+      color: #dc3545 !important;
+      background-color: transparent !important;
+      border-color: #dc3545 !important;
+
+      &:hover {
+        color: white !important;
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+      }
+
+      &:focus {
+        color: white !important;
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+      }
+
+      &:disabled {
+        color: #dc3545 !important;
+        background-color: transparent !important;
+        opacity: 0.6;
+      }
+    }
   }
 }
 </style>

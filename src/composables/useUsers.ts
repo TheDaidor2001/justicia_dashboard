@@ -2,7 +2,7 @@ import { computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores/users'
 import { useAuth } from '@/composables/useAuth'
-import type { User, UserRole, UserFilters } from '@/types/user'
+import type { User, UserRoleType, UserFilters } from '@/types/user'
 
 export const useUsers = () => {
   const userStore = useUserStore()
@@ -116,12 +116,12 @@ export const useUsers = () => {
   }
 
   // Utilidades
-  const getUserByRole = (role: UserRole) => {
-    return users.value.filter((user) => user.rol === role)
+  const getUserByRole = (role: UserRoleType) => {
+    return users.value.filter((user: User) => user.rol === role)
   }
 
   const getUsersByDepartment = (departmentId: string) => {
-    return users.value.filter((user) => user.departamento_id === departmentId)
+    return users.value.filter((user: User) => user.departamento_id === departmentId)
   }
 
   const isUserAssignable = (user: User, forModule?: string) => {
@@ -151,11 +151,13 @@ export const useUsers = () => {
     return user.nombre
   }
 
-  const getUserRoleLabel = (role: UserRole) => {
-    const labels: Record<UserRole, string> = {
+  const getUserRoleLabel = (role: UserRoleType) => {
+    const labels: Record<UserRoleType, string> = {
       admin: 'Administrador',
       presidente_cspj: 'Presidente CSPJ',
+      vicepresidente_cspj: 'Vicepresidente CSPJ',
       secretario_general: 'Secretario General',
+      secretario_adjunto: 'Secretario Adjunto',
       juez: 'Juez',
       presidente_audiencia: 'Presidente de Audiencia',
       director_prensa: 'Director de Prensa',
@@ -164,11 +166,13 @@ export const useUsers = () => {
     return labels[role] || role
   }
 
-  const getUserRoleColor = (role: UserRole) => {
-    const colors: Record<UserRole, string> = {
+  const getUserRoleColor = (role: UserRoleType) => {
+    const colors: Record<UserRoleType, string> = {
       admin: 'danger',
       presidente_cspj: 'warn',
+      vicepresidente_cspj: 'warn',
       secretario_general: 'info',
+      secretario_adjunto: 'info',
       juez: 'success',
       presidente_audiencia: 'secondary',
       director_prensa: 'primary',
@@ -206,10 +210,41 @@ export const useUsers = () => {
     exportUsers,
     setFilters,
     resetFilters,
+    setPage,
     setPagination,
     clearError,
     clearCurrentUser,
   } = userStore
+
+  // Métodos para filtros con paginación del servidor
+  const setSearchFilter = (search: string) => {
+    setFilters({ search, page: 1 })
+    fetchUsers()
+  }
+
+  const setRoleFilter = (rol: UserRoleType | undefined) => {
+    setFilters({ rol, page: 1 })
+    fetchUsers()
+  }
+
+  const setStatusFilter = (estado: 'activo' | 'inactivo' | undefined) => {
+    setFilters({ estado, page: 1 })
+    fetchUsers()
+  }
+
+  const setDepartmentFilter = (departamento_id: string | undefined) => {
+    setFilters({ departamento_id, page: 1 })
+    fetchUsers()
+  }
+
+  const setPageFilter = (page: number) => {
+    setPage(page)
+    fetchUsers()
+  }
+
+  const refreshUsers = () => {
+    fetchUsers()
+  }
 
   return {
     // Estado
@@ -263,5 +298,13 @@ export const useUsers = () => {
     setPagination,
     clearError,
     clearCurrentUser,
+
+    // Métodos de filtrado con paginación del servidor
+    setSearchFilter,
+    setRoleFilter,
+    setStatusFilter,
+    setDepartmentFilter,
+    setPageFilter,
+    refreshUsers,
   }
 }

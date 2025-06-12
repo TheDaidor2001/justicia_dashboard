@@ -2,12 +2,18 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axiosInstance from '@/api/axios'
 import { API_ENDPOINTS, STORAGE_KEYS } from '@/api/config'
-import type { User, LoginCredentials, AuthState, ApiResponse, LoginResponse } from '@/types/auth'
+import type {
+  AuthUser,
+  LoginCredentials,
+  AuthState,
+  ApiResponse,
+  LoginResponse,
+} from '@/types/auth'
 import { useRouter } from 'vue-router'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
-  const user = ref<User | null>(null)
+  const user = ref<AuthUser | null>(null)
   const accessToken = ref<string | null>(null)
   const refreshToken = ref<string | null>(null)
   const loading = ref(false)
@@ -105,12 +111,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const updateProfile = async (data: Partial<User>) => {
+  const updateProfile = async (data: Partial<AuthUser>) => {
     loading.value = true
     error.value = null
 
     try {
-      const response = await axiosInstance.put<ApiResponse<User>>(
+      const response = await axiosInstance.put<ApiResponse<AuthUser>>(
         API_ENDPOINTS.UPDATE_PROFILE,
         data,
       )

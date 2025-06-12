@@ -27,14 +27,15 @@ export const useNewsStore = defineStore('news', () => {
   const error = ref<string | null>(null)
   const filters = ref<NewsFilters>({
     page: 1,
-    limit: 20,
+    limit: 10,
     search: '',
     type: undefined,
     status: undefined,
+    authorId: undefined,
   })
   const pagination = ref({
     page: 1,
-    limit: 20,
+    limit: 10,
     total: 0,
     totalPages: 0,
   })
@@ -93,6 +94,18 @@ export const useNewsStore = defineStore('news', () => {
 
     try {
       const finalFilters = { ...filters.value, ...customFilters }
+
+      // Limpiar filtros vacíos
+      if (finalFilters.search === '') {
+        delete finalFilters.search
+      }
+      if (!finalFilters.type) {
+        delete finalFilters.type
+      }
+      if (!finalFilters.status) {
+        delete finalFilters.status
+      }
+
       const response = await newsService.getPublicNews(finalFilters)
 
       if (response.success) {
@@ -159,6 +172,17 @@ export const useNewsStore = defineStore('news', () => {
 
     try {
       const finalFilters = { ...filters.value, ...customFilters }
+
+      // Limpiar filtros vacíos para evitar enviar parámetros innecesarios
+      if (finalFilters.search === '') {
+        delete finalFilters.search
+      }
+      if (!finalFilters.type) {
+        delete finalFilters.type
+      }
+      if (!finalFilters.status) {
+        delete finalFilters.status
+      }
 
       // Agregar timestamp para forzar recarga si es necesario
       if (forceRefresh) {
@@ -459,6 +483,8 @@ export const useNewsStore = defineStore('news', () => {
 
       return { success: false, message: response.message }
     } catch (err: any) {
+      // Si no hay estadísticas del backend, no hacer nada especial
+      // El composable calculará las estadísticas desde los datos locales
       return { success: false, message: err.message }
     }
   }
@@ -471,10 +497,11 @@ export const useNewsStore = defineStore('news', () => {
   const resetFilters = () => {
     filters.value = {
       page: 1,
-      limit: 20,
+      limit: 10,
       search: '',
       type: undefined,
       status: undefined,
+      authorId: undefined,
     }
   }
 
@@ -508,6 +535,18 @@ export const useNewsStore = defineStore('news', () => {
 
     try {
       const finalFilters = { ...filters.value, ...customFilters }
+
+      // Limpiar filtros vacíos
+      if (finalFilters.search === '') {
+        delete finalFilters.search
+      }
+      if (!finalFilters.type) {
+        delete finalFilters.type
+      }
+      if (!finalFilters.status) {
+        delete finalFilters.status
+      }
+
       const response = await newsService.getMyNews(finalFilters)
 
       if (response.success) {
@@ -531,6 +570,18 @@ export const useNewsStore = defineStore('news', () => {
 
     try {
       const finalFilters = { ...filters.value, ...customFilters }
+
+      // Limpiar filtros vacíos
+      if (finalFilters.search === '') {
+        delete finalFilters.search
+      }
+      if (!finalFilters.type) {
+        delete finalFilters.type
+      }
+      if (!finalFilters.status) {
+        delete finalFilters.status
+      }
+
       const response = await newsService.getNewsPendingApproval(finalFilters)
 
       if (response.success) {
@@ -554,6 +605,18 @@ export const useNewsStore = defineStore('news', () => {
 
     try {
       const finalFilters = { ...filters.value, ...customFilters }
+
+      // Limpiar filtros vacíos
+      if (finalFilters.search === '') {
+        delete finalFilters.search
+      }
+      if (!finalFilters.type) {
+        delete finalFilters.type
+      }
+      if (!finalFilters.status) {
+        delete finalFilters.status
+      }
+
       const response = await newsService.getNewsCreatedByMe(finalFilters)
 
       if (response.success) {

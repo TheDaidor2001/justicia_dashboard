@@ -4,16 +4,14 @@
     <Card>
       <template #title>
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center"
+          >
             <i class="pi pi-shield text-white text-xl"></i>
           </div>
           <div>
-            <h2 class="text-2xl font-bold text-gray-900">
-              Seguridad y Contraseña
-            </h2>
-            <p class="text-gray-600">
-              Cambia tu contraseña para mantener tu cuenta segura
-            </p>
+            <h2 class="text-2xl font-bold text-gray-900">Seguridad y Contraseña</h2>
+            <p class="text-gray-600">Cambia tu contraseña para mantener tu cuenta segura</p>
           </div>
         </div>
       </template>
@@ -127,11 +125,15 @@
             </div>
             <div class="flex items-start gap-2">
               <i class="pi pi-check-circle text-green-600 mt-0.5"></i>
-              <span class="text-sm text-gray-900">Incluya mayúsculas, minúsculas, números y símbolos</span>
+              <span class="text-sm text-gray-900"
+                >Incluya mayúsculas, minúsculas, números y símbolos</span
+              >
             </div>
             <div class="flex items-start gap-2">
               <i class="pi pi-check-circle text-green-600 mt-0.5"></i>
-              <span class="text-sm text-gray-900">No use información personal como nombres o fechas</span>
+              <span class="text-sm text-gray-900"
+                >No use información personal como nombres o fechas</span
+              >
             </div>
           </div>
           <div class="space-y-3">
@@ -166,7 +168,7 @@ const profileStore = useProfileStore()
 const passwordForm = reactive<ChangePasswordRequest>({
   currentPassword: '',
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
 })
 
 const successMessage = ref('')
@@ -174,19 +176,21 @@ const successMessage = ref('')
 const validationRules = computed(() => ({
   currentPassword: { required },
   newPassword: { required, minLength: minLength(6) },
-  confirmPassword: { 
-    required, 
-    sameAsPassword: sameAs(computed(() => passwordForm.newPassword))
-  }
+  confirmPassword: {
+    required,
+    sameAsPassword: sameAs(computed(() => passwordForm.newPassword)),
+  },
 }))
 
 const $v = useVuelidate(validationRules, passwordForm)
 
 const isFormValid = computed(() => {
-  return passwordForm.currentPassword && 
-         passwordForm.newPassword && 
-         passwordForm.confirmPassword &&
-         passwordForm.newPassword === passwordForm.confirmPassword
+  return (
+    passwordForm.currentPassword &&
+    passwordForm.newPassword &&
+    passwordForm.confirmPassword &&
+    passwordForm.newPassword === passwordForm.confirmPassword
+  )
 })
 
 async function changePassword() {
@@ -195,21 +199,20 @@ async function changePassword() {
 
   try {
     await profileStore.changePassword(passwordForm)
-    
+
     // Limpiar formulario
     passwordForm.currentPassword = ''
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
     $v.value.$reset()
-    
+
     // Mostrar mensaje de éxito
     successMessage.value = 'Contraseña cambiada exitosamente'
-    
+
     // Limpiar mensaje después de 5 segundos
     setTimeout(() => {
       successMessage.value = ''
     }, 5000)
-    
   } catch (error) {
     console.error('Error changing password:', error)
   }
@@ -231,15 +234,15 @@ async function changePassword() {
 
 /* Forzar texto negro siempre */
 :deep(.p-card) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 :deep(.p-card .p-card-title) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 :deep(.p-card .p-card-content) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 :deep(.p-password) {

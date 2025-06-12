@@ -7,7 +7,7 @@ import type {
   UserStats,
   UserNotification,
   ActiveSession,
-  DepartmentInfo
+  DepartmentInfo,
 } from '@/types/profile'
 
 export const profileService = {
@@ -75,38 +75,38 @@ export const profileService = {
       case 'juez':
         stats.juez = {
           totalExpedientes: data.length,
-          expedientesBorrador: data.filter(item => item.status === 'draft').length,
-          expedientesPendientes: data.filter(item => item.status === 'pending_approval').length,
-          expedientesAprobados: data.filter(item => item.status === 'approved').length,
-          expedientesRechazados: data.filter(item => item.status === 'rejected').length
+          expedientesBorrador: data.filter((item) => item.status === 'draft').length,
+          expedientesPendientes: data.filter((item) => item.status === 'pending_approval').length,
+          expedientesAprobados: data.filter((item) => item.status === 'approved').length,
+          expedientesRechazados: data.filter((item) => item.status === 'rejected').length,
         }
         break
       case 'presidente_audiencia':
         const currentMonth = new Date().getMonth()
-        const approvedThisMonth = data.filter(item => 
-          item.status === 'approved' && 
-          new Date(item.approvedAt).getMonth() === currentMonth
+        const approvedThisMonth = data.filter(
+          (item) =>
+            item.status === 'approved' && new Date(item.approvedAt).getMonth() === currentMonth,
         )
         stats.presidenteAudiencia = {
-          expedientesPendientes: data.filter(item => item.status === 'pending_approval').length,
+          expedientesPendientes: data.filter((item) => item.status === 'pending_approval').length,
           expedientesAprobadosMes: approvedThisMonth.length,
-          tiempoPromedioAprobacion: this.calculateAverageApprovalTime(approvedThisMonth)
+          tiempoPromedioAprobacion: this.calculateAverageApprovalTime(approvedThisMonth),
         }
         break
       case 'director_prensa':
       case 'tecnico_prensa':
         stats.directorPrensa = {
-          noticiasPublicadas: data.filter(item => item.status === 'published').length,
-          noticiasBorrador: data.filter(item => item.status === 'draft').length,
-          noticiasPendientes: data.filter(item => item.status === 'pending_approval').length
+          noticiasPublicadas: data.filter((item) => item.status === 'published').length,
+          noticiasBorrador: data.filter((item) => item.status === 'draft').length,
+          noticiasPendientes: data.filter((item) => item.status === 'pending_approval').length,
         }
         break
       case 'secretario_adjunto':
-        const respondidos = data.filter(item => item.status === 'responded')
+        const respondidos = data.filter((item) => item.status === 'responded')
         stats.secretarioAdjunto = {
           mensajesAsignados: data.length,
           mensajesRespondidos: respondidos.length,
-          tiempoPromedioRespuesta: this.calculateAverageResponseTime(respondidos)
+          tiempoPromedioRespuesta: this.calculateAverageResponseTime(respondidos),
         }
         break
     }
@@ -120,7 +120,7 @@ export const profileService = {
     const totalHours = items.reduce((sum, item) => {
       const created = new Date(item.createdAt)
       const approved = new Date(item.approvedAt)
-      return sum + ((approved.getTime() - created.getTime()) / (1000 * 60 * 60))
+      return sum + (approved.getTime() - created.getTime()) / (1000 * 60 * 60)
     }, 0)
     return Math.round(totalHours / items.length)
   },
@@ -131,7 +131,7 @@ export const profileService = {
     const totalHours = items.reduce((sum, item) => {
       const created = new Date(item.createdAt)
       const responded = new Date(item.respondedAt)
-      return sum + ((responded.getTime() - created.getTime()) / (1000 * 60 * 60))
+      return sum + (responded.getTime() - created.getTime()) / (1000 * 60 * 60)
     }, 0)
     return Math.round(totalHours / items.length)
   },
@@ -162,5 +162,5 @@ export const profileService = {
   async getDepartmentInfo(departmentId: number): Promise<DepartmentInfo> {
     const response = await apiClient.get(`/departments/${departmentId}`)
     return response.data
-  }
+  },
 }

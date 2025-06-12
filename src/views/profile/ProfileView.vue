@@ -13,11 +13,9 @@
         <i class="pi pi-chevron-right text-sm"></i>
         <span>Mi Perfil</span>
       </div>
-      
+
       <h1 class="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-      <p class="text-gray-600 mt-2">
-        Gestiona tu información personal y configuración de cuenta
-      </p>
+      <p class="text-gray-600 mt-2">Gestiona tu información personal y configuración de cuenta</p>
     </div>
 
     <div class="bg-white rounded-lg shadow">
@@ -36,7 +34,7 @@
           <TabPanel value="0">
             <PersonalDataSection />
           </TabPanel>
-          
+
           <TabPanel value="1">
             <SecuritySection />
           </TabPanel>
@@ -100,77 +98,77 @@ onMounted(async () => {
 
 /* Cards específicamente */
 .profile-view :deep(.p-card) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 .profile-view :deep(.p-card *) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 .profile-view :deep(.p-card .p-card-title) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 .profile-view :deep(.p-card .p-card-content) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 /* Excepciones para iconos y badges que deben mantener sus colores */
 .profile-view :deep(.pi) {
-  @apply text-current !important;
+  @apply !text-current;
 }
 
 .profile-view :deep(.p-tag) {
-  @apply text-current !important;
+  @apply !text-current;
 }
 
 .profile-view :deep(.p-badge) {
-  @apply text-current !important;
+  @apply !text-current;
 }
 
 /* Botones outlined visibles */
 .profile-view :deep(.p-button-outlined) {
-  @apply text-gray-900 border-gray-600 bg-white !important;
+  @apply !text-gray-900 !border-gray-600 !bg-white;
 }
 
 .profile-view :deep(.p-button-outlined .p-button-label) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 .profile-view :deep(.p-button-outlined .p-button-icon) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 .profile-view :deep(.p-button-outlined:hover) {
-  @apply bg-gray-100 text-gray-900 border-gray-700 !important;
+  @apply !bg-gray-100 !text-gray-900 !border-gray-700;
 }
 
 .profile-view :deep(.p-button-outlined:hover .p-button-label) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 .profile-view :deep(.p-button-outlined:hover .p-button-icon) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 
 .profile-view :deep(.p-button-outlined:focus) {
-  @apply border-blue-500 text-gray-900 !important;
+  @apply !border-blue-500 !text-gray-900;
 }
 
 /* Estilos específicos para botones de navegación */
 .profile-view :deep(.p-button-text) {
-  @apply text-gray-600 !important;
+  @apply !text-gray-600;
 }
 
 .profile-view :deep(.p-button-text:hover) {
-  @apply text-gray-900 bg-gray-100 !important;
+  @apply !text-gray-900 !bg-gray-100;
 }
 
 .profile-view :deep(.p-button-text .p-button-icon) {
-  @apply text-gray-600 !important;
+  @apply !text-gray-600;
 }
 
 .profile-view :deep(.p-button-text:hover .p-button-icon) {
-  @apply text-gray-900 !important;
+  @apply !text-gray-900;
 }
 </style>

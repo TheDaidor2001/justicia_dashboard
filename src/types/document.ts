@@ -47,7 +47,7 @@ export interface DocumentStats {
 }
 
 // Tipos de archivo permitidos
-export const ALLOWED_FILE_TYPES = {
+export const DOC_ALLOWED_FILE_TYPES = {
   'application/pdf': '.pdf',
   'application/msword': '.doc',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
@@ -56,7 +56,7 @@ export const ALLOWED_FILE_TYPES = {
   'image/gif': '.gif',
 }
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+export const DOC_MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 
 // Helpers
 export const getFileExtension = (filename: string): string => {

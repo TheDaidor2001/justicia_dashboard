@@ -33,6 +33,40 @@ export const useNews = () => {
   let lastRefreshTime = 0
   const MIN_REFRESH_INTERVAL = 2000 // 2 segundos mínimo entre refreshes
 
+  // Obtener filtros basados en el rol del usuario
+  const getRoleBasedFilters = (): NewsFilters => {
+    if (!user.value) return {}
+
+    const baseFilters: NewsFilters = {}
+    const role = userRole.value
+    const userId = user.value.id
+
+    if (role === 'admin') {
+      // Admin ve todo sin filtros adicionales
+      return baseFilters
+    }
+
+    if (role === 'tecnico_prensa') {
+      // Técnico de prensa: solo sus propias noticias
+      baseFilters.authorId = userId
+    } else if (role === 'director_prensa') {
+      // Director de prensa: sus noticias + las pendientes de aprobación de director
+      // Esto se maneja mejor en el backend con lógica específica
+      baseFilters.authorId = userId // Por ahora solo sus noticias, el backend debe manejar las pendientes
+    } else if (role === 'presidente_cspj' || role === 'vicepresidente_cspj') {
+      // Presidente/Vicepresidente: sus noticias + pendientes presidenciales (solo noticias)
+      baseFilters.authorId = userId // El backend debe manejar las pendientes presidenciales
+    } else if (role === 'juez' || role === 'presidente_audiencia') {
+      // Juez/Presidente audiencia: solo sus noticias
+      baseFilters.authorId = userId
+    } else {
+      // Por defecto, solo noticias propias
+      baseFilters.authorId = userId
+    }
+
+    return baseFilters
+  }
+
   // Cargar noticias al montar (solo para usuarios autenticados)
   onMounted(() => {
     // Removido la carga automática aquí para dejar que cada componente
@@ -218,6 +252,8 @@ export const useNews = () => {
   // ===== FILTROS Y BÚSQUEDA =====
 
   const setTypeFilter = (type: NewsType | undefined) => {
+    const roleFilters = getRoleBasedFilters()
+    
     // Si el presidente filtra por tipo, mantener solo noticias cuando aplique
     if (
       (userRole.value === 'presidente_cspj' || userRole.value === 'vicepresidente_cspj') &&
@@ -225,51 +261,66 @@ export const useNews = () => {
     ) {
       // Solo permitir filtrar por tipo noticia
       if (type === NewsType.NOTICIA) {
-        newsStore.setFilters({ type, page: 1 })
+        const newFilters = { ...roleFilters, type, page: 1 }
+        newsStore.setFilters(newFilters)
       } else {
         // No aplicar filtro si no es noticia
         return
       }
     } else {
-      newsStore.setFilters({ type, page: 1 })
+      const newFilters = { ...roleFilters, type, page: 1 }
+      newsStore.setFilters(newFilters)
     }
 
-    // El backend ya filtra automáticamente según el rol
     newsStore.fetchNews()
   }
 
   const setStatusFilter = (status: NewsStatus | undefined) => {
-    newsStore.setFilters({ status, page: 1 })
-    // El backend ya filtra automáticamente según el rol
+    const roleFilters = getRoleBasedFilters()
+    const newFilters = { ...roleFilters, status, page: 1 }
+    newsStore.setFilters(newFilters)
     newsStore.fetchNews()
   }
 
   const setSearchFilter = (search: string) => {
+    const roleFilters = getRoleBasedFilters()
+    
     // Cancelar el timer anterior si existe
     if (searchDebounceTimer) {
       clearTimeout(searchDebounceTimer)
     }
 
-    // Actualizar el filtro inmediatamente
-    newsStore.setFilters({ search, page: 1 })
+    // Actualizar el filtro inmediatamente con filtros de rol
+    const newFilters = { ...roleFilters, search, page: 1 }
+    newsStore.setFilters(newFilters)
 
-    // Si la búsqueda está vacía o es muy corta, no hacer petición
-    if (search.length > 0 && search.length < 3) {
+    // Si la búsqueda está vacía, buscar inmediatamente para limpiar los filtros
+    if (search.length === 0) {
+      if (!newsStore.loading) {
+        newsStore.fetchNews()
+      }
       return
     }
 
-    // Crear un nuevo timer para la búsqueda con más tiempo para evitar 429
+    // Si la búsqueda es muy corta (1-2 caracteres), no hacer petición
+    if (search.length < 3) {
+      return
+    }
+
+    // Crear un nuevo timer para la búsqueda con debounce
     searchDebounceTimer = setTimeout(() => {
       // Verificar que no se esté cargando ya
       if (!newsStore.loading) {
         newsStore.fetchNews()
       }
-    }, 1500) // Aumentar a 1.5 segundos para evitar demasiadas peticiones
+    }, 800) // Reducir a 800ms para mejor experiencia de usuario
   }
 
   const setPage = (page: number) => {
-    newsStore.setFilters({ page })
-    // El backend ya filtra automáticamente según el rol
+    const roleFilters = getRoleBasedFilters()
+    const currentFilters = newsStore.filters
+    const newFilters = { ...roleFilters, ...currentFilters, page }
+    newsStore.setFilters(newFilters)
     newsStore.fetchNews()
   }
 
@@ -287,13 +338,15 @@ export const useNews = () => {
     }
 
     lastRefreshTime = now
-    newsStore.fetchNews()
+    const roleFilters = getRoleBasedFilters()
+    newsStore.fetchNews(roleFilters)
   }
 
   // Función para forzar recarga sin importar el estado
   const forceRefreshNews = async () => {
+    const roleFilters = getRoleBasedFilters()
     // Forzar recarga sin verificaciones usando el parámetro forceRefresh
-    await newsStore.fetchNews(undefined, true)
+    await newsStore.fetchNews(roleFilters, true)
   }
 
   // ===== NAVEGACIÓN =====
@@ -374,84 +427,68 @@ export const useNews = () => {
   // ===== ESTADÍSTICAS =====
 
   const newsStats = computed(() => {
-    const stats = newsStore.statistics
-    if (!stats) return null
+    const newsList = filteredNewsList.value
+
+    // SIEMPRE calcular estadísticas desde los datos locales para tener información actualizada
+    const localStats = {
+      total: newsList.length,
+      byType: {
+        noticia: newsList.filter((n) => n.type === NewsType.NOTICIA).length,
+        aviso: newsList.filter((n) => n.type === NewsType.AVISO).length,
+        comunicado: newsList.filter((n) => n.type === NewsType.COMUNICADO).length,
+      },
+      byStatus: {
+        draft: newsList.filter((n) => n.status === 'draft').length,
+        pending_director: newsList.filter((n) => n.status === 'pending_director_approval').length,
+        pending_president: newsList.filter((n) => n.status === 'pending_president_approval').length,
+        published: newsList.filter((n) => n.status === 'published').length,
+        rejected: newsList.filter((n) => n.status === 'rejected').length,
+      },
+    }
+
+    // Calcular estadísticas del mes actual para noticias publicadas
+    const currentMonth = new Date().getMonth()
+    const currentYear = new Date().getFullYear()
+
+    const publishedThisMonth = newsList.filter((n) => {
+      if (n.status !== 'published' || !n.publishedAt) return false
+      const publishDate = new Date(n.publishedAt)
+      return publishDate.getMonth() === currentMonth && publishDate.getFullYear() === currentYear
+    }).length
+
+    // Calcular total de vistas del mes
+    const viewsThisMonth = newsList
+      .filter((n) => {
+        if (n.status !== 'published' || !n.publishedAt) return false
+        const publishDate = new Date(n.publishedAt)
+        return publishDate.getMonth() === currentMonth && publishDate.getFullYear() === currentYear
+      })
+      .reduce((total, news) => total + (news.viewCount || 0), 0)
 
     return {
-      total: stats.total || 0,
+      total: localStats.total,
       porTipo: [
-        { tipo: 'Noticias', cantidad: stats.byType?.noticia || 0, color: 'blue' },
-        { tipo: 'Avisos', cantidad: stats.byType?.aviso || 0, color: 'orange' },
-        { tipo: 'Comunicados', cantidad: stats.byType?.comunicado || 0, color: 'purple' },
+        { tipo: 'Noticias', cantidad: localStats.byType.noticia, color: 'blue' },
+        { tipo: 'Avisos', cantidad: localStats.byType.aviso, color: 'orange' },
+        { tipo: 'Comunicados', cantidad: localStats.byType.comunicado, color: 'purple' },
       ],
       porEstado: [
-        { estado: 'Borrador', cantidad: stats.byStatus?.draft || 0, color: 'gray' },
+        { estado: 'Borrador', cantidad: localStats.byStatus.draft, color: 'gray' },
         {
           estado: 'En Revisión',
-          cantidad:
-            (stats.byStatus?.pending_director || 0) + (stats.byStatus?.pending_president || 0),
+          cantidad: localStats.byStatus.pending_director + localStats.byStatus.pending_president,
           color: 'yellow',
         },
-        { estado: 'Publicados', cantidad: stats.byStatus?.published || 0, color: 'green' },
-        { estado: 'Rechazados', cantidad: stats.byStatus?.rejected || 0, color: 'red' },
+        { estado: 'Publicados', cantidad: localStats.byStatus.published, color: 'green' },
+        { estado: 'Rechazados', cantidad: localStats.byStatus.rejected, color: 'red' },
       ],
-      publicadasMes: stats.publishedThisMonth || 0,
-      vistasMes: stats.viewsThisMonth || 0,
+      publicadasMes: publishedThisMonth,
+      vistasMes: viewsThisMonth,
     }
   })
 
-  // Filtrar noticias según el rol del usuario
-  const filteredNewsList = computed(() => {
-    const allNews = newsStore.newsList
-    const role = userRole.value
-    const userId = user.value?.id
-
-    if (!userId || role === 'admin') {
-      return allNews // Admin ve todo
-    }
-
-    const filtered = allNews.filter((news) => {
-      const newsAuthorId = (news as any).authorId || news.createdBy
-      const isAuthor = newsAuthorId === userId
-
-      // Técnico de prensa: solo sus propias noticias
-      if (role === 'tecnico_prensa') {
-        return isAuthor
-      }
-
-      // Director de prensa: sus noticias + las pendientes de aprobación de director
-      if (role === 'director_prensa') {
-        const isPendingForDirector = news.status === NewsStatus.PENDING_DIRECTOR && !isAuthor
-        const shouldShow = isAuthor || isPendingForDirector
-
-        return shouldShow
-      }
-
-      // Presidente/Vicepresidente CSPJ: sus noticias + las pendientes de aprobación presidencial (SOLO noticias)
-      if (role === 'presidente_cspj' || role === 'vicepresidente_cspj') {
-        const isPendingForPresident =
-          news.status === NewsStatus.PENDING_PRESIDENT &&
-          news.type === NewsType.NOTICIA &&
-          !isAuthor
-
-        // REGLA CLAVE: Solo ven noticias, nunca avisos ni comunicados de otros
-        const canSeeThisNews = isAuthor || (isPendingForPresident && news.type === NewsType.NOTICIA)
-
-        // Si es su propia noticia, siempre puede verla independientemente del tipo
-        // Si no es suya, solo si es una noticia pendiente de aprobación presidencial
-        return canSeeThisNews
-      }
-
-      // Juez/Presidente audiencia: solo sus noticias
-      if (role === 'juez' || role === 'presidente_audiencia') {
-        return isAuthor
-      }
-
-      // Por defecto, solo noticias propias
-      return isAuthor
-    })
-    return filtered
-  })
+  // Las noticias ahora vienen ya filtradas del servidor
+  const filteredNewsList = computed(() => newsStore.newsList)
 
   return {
     // Estado del store

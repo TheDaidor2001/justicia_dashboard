@@ -27,7 +27,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  color: 'blue'
+  color: 'blue',
 })
 
 const cardClasses = computed(() => {
@@ -38,9 +38,9 @@ const cardClasses = computed(() => {
     yellow: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800',
     red: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800',
     purple: 'bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800',
-    gray: 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-800'
+    gray: 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-800',
   }
-  
+
   return `${baseClasses} ${colorClasses[props.color]}`
 })
 
@@ -52,9 +52,9 @@ const iconClasses = computed(() => {
     yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-800 dark:text-yellow-300',
     red: 'bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-300',
     purple: 'bg-purple-100 text-purple-600 dark:bg-purple-800 dark:text-purple-300',
-    gray: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+    gray: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
   }
-  
+
   return `${baseClasses} ${colorClasses[props.color]}`
 })
 

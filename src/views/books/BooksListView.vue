@@ -368,7 +368,9 @@ const filteredBooks = computed(() => {
       (book) =>
         book.title.toLowerCase().includes(search) ||
         book.author.toLowerCase().includes(search) ||
-        (book.tags && Array.isArray(book.tags) && book.tags.some((tag) => tag.toLowerCase().includes(search))),
+        (book.tags &&
+          Array.isArray(book.tags) &&
+          book.tags.some((tag) => tag.toLowerCase().includes(search))),
     )
   }
 

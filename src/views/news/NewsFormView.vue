@@ -73,6 +73,11 @@ const newsTypes = computed(() => {
     },
   ]
 
+  // Si es envío desde juzgado, solo mostrar avisos y comunicados
+  if (isCourtSubmission.value) {
+    return allTypes.filter((type) => [NewsType.AVISO, NewsType.COMUNICADO].includes(type.value))
+  }
+
   // Filtrar solo los tipos permitidos para el rol actual
   return allTypes.filter((type) => allowedTypes.includes(type.value))
 })
@@ -104,9 +109,14 @@ onMounted(() => {
   }
 
   // Ajustar tipo por defecto según permisos
-  const allowedTypes = getAllowedContentTypes.value
-  if (allowedTypes.length > 0 && !allowedTypes.includes(formData.value.type)) {
-    formData.value.type = allowedTypes[0]
+  if (isCourtSubmission.value) {
+    // Para envíos desde juzgado, tipo por defecto es aviso
+    formData.value.type = NewsType.AVISO
+  } else {
+    const allowedTypes = getAllowedContentTypes.value
+    if (allowedTypes.length > 0 && !allowedTypes.includes(formData.value.type)) {
+      formData.value.type = allowedTypes[0]
+    }
   }
 })
 
@@ -159,9 +169,14 @@ const initializeComponent = async () => {
   }
 
   // Ajustar tipo por defecto según permisos
-  const allowedTypes = getAllowedContentTypes.value
-  if (allowedTypes.length > 0 && !allowedTypes.includes(formData.value.type)) {
-    formData.value.type = allowedTypes[0]
+  if (isCourtSubmission.value) {
+    // Para envíos desde juzgado, tipo por defecto es aviso
+    formData.value.type = NewsType.AVISO
+  } else {
+    const allowedTypes = getAllowedContentTypes.value
+    if (allowedTypes.length > 0 && !allowedTypes.includes(formData.value.type)) {
+      formData.value.type = allowedTypes[0]
+    }
   }
 
   // Cargar noticia si es modo edición
@@ -348,6 +363,7 @@ const submitForm = async () => {
       // Envío especial desde juzgados
       const courtData = {
         title: formData.value.title,
+        subtitle: formData.value.subtitle,
         content: formData.value.content,
         type: formData.value.type as 'aviso' | 'comunicado',
         image: imageFile.value || undefined,
@@ -794,6 +810,76 @@ onUnmounted(() => {
       min-height: 200px;
       font-size: 1rem;
       line-height: 1.6;
+    }
+  }
+}
+
+/* Estilos para asegurar que los botones tengan texto blanco visible */
+:deep(.p-button) {
+  &.p-button-secondary {
+    color: white !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+
+    &:hover {
+      color: white !important;
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+    }
+
+    &:focus {
+      color: white !important;
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      background-color: #6c757d !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-info {
+    color: white !important;
+
+    &:hover {
+      color: white !important;
+    }
+
+    &:focus {
+      color: white !important;
+    }
+
+    &:disabled {
+      color: white !important;
+      opacity: 0.6;
+    }
+  }
+
+  &.p-button-outlined {
+    &.p-button-secondary {
+      color: #6c757d !important;
+      background-color: transparent !important;
+      border-color: #6c757d !important;
+
+      &:hover {
+        color: white !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+      }
+
+      &:focus {
+        color: white !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+      }
+
+      &:disabled {
+        color: #6c757d !important;
+        background-color: transparent !important;
+        opacity: 0.6;
+      }
     }
   }
 }

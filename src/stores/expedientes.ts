@@ -22,14 +22,14 @@ export const useExpedientesStore = defineStore('expedientes', () => {
   const error = ref<string | null>(null)
   const filters = ref<ExpedienteFilters>({
     page: 1,
-    limit: 20,
+    limit: 10,
     search: '',
     status: undefined,
     departmentId: undefined,
   })
   const pagination = ref({
     page: 1,
-    limit: 20,
+    limit: 10,
     total: 0,
     totalPages: 0,
   })
@@ -63,19 +63,12 @@ export const useExpedientesStore = defineStore('expedientes', () => {
         expedientes.value = response.data
         pagination.value = response.pagination
 
-        // Debug: verificar estructura de datos
-        console.log('=== DEBUG Expedientes Cargados ===')
-        response.data.forEach((exp: Expediente) => {
-          if (exp.status === 'pending_approval') {
-            console.log(`Expediente ${exp.caseNumber}:`, {
-              status: exp.status,
-              currentLevel: exp.currentLevel,
-              departmentId: exp.departmentId,
-              createdBy: exp.createdBy,
-              department: exp.department,
-            })
-          }
-        })
+        // Debug: verificar datos de paginación
+        console.log('=== DEBUG Paginación ===')
+        console.log('Filtros enviados:', finalFilters)
+        console.log('Expedientes recibidos:', response.data.length)
+        console.log('Paginación recibida:', response.pagination)
+        console.log('Total calculado de páginas:', Math.ceil(response.pagination.total / response.pagination.limit))
 
         return { success: true }
       }
@@ -258,7 +251,7 @@ export const useExpedientesStore = defineStore('expedientes', () => {
   const resetFilters = () => {
     filters.value = {
       page: 1,
-      limit: 20,
+      limit: 10,
       search: '',
       status: undefined,
       departmentId: undefined,

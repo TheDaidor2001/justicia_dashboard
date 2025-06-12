@@ -1,9 +1,7 @@
 <template>
   <div class="stats-section">
     <div class="mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-        Mis Estadísticas
-      </h2>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Mis Estadísticas</h2>
       <p class="text-gray-600 dark:text-gray-400">
         Resumen de tu actividad según tu rol en el sistema
       </p>
@@ -71,7 +69,12 @@
       </template>
 
       <!-- Estadísticas para Director/Técnico de Prensa -->
-      <template v-if="(userRole === 'director_prensa' || userRole === 'tecnico_prensa') && userStats.directorPrensa">
+      <template
+        v-if="
+          (userRole === 'director_prensa' || userRole === 'tecnico_prensa') &&
+          userStats.directorPrensa
+        "
+      >
         <StatCard
           title="Noticias Publicadas"
           :value="userStats.directorPrensa.noticiasPublicadas"
@@ -162,7 +165,8 @@ const hasRoleStats = computed(() => {
   return !!(
     (userRole.value === 'juez' && stats.juez) ||
     (userRole.value === 'presidente_audiencia' && stats.presidenteAudiencia) ||
-    ((userRole.value === 'director_prensa' || userRole.value === 'tecnico_prensa') && stats.directorPrensa) ||
+    ((userRole.value === 'director_prensa' || userRole.value === 'tecnico_prensa') &&
+      stats.directorPrensa) ||
     (userRole.value === 'secretario_adjunto' && stats.secretarioAdjunto)
   )
 })

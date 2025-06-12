@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { authGuard, expedientesGuard, juezGuard } from '@/guards/auth.guard'
+import { authGuard, expedientesGuard, juezGuard, contactoGuard } from '@/guards/auth.guard'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -104,6 +104,14 @@ const router = createRouter({
       path: '/noticias/:id/editar',
       name: 'noticia-editar',
       component: () => import('@/views/news/NewsFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+    // Rutas de contacto ciudadano
+    {
+      path: '/contacto',
+      name: 'contacto',
+      component: () => import('@/views/contact/ContactView.vue'),
+      beforeEnter: contactoGuard,
       meta: { requiresAuth: true },
     },
     // Rutas de gestión de usuarios - Solo admins según los endpoints especificados

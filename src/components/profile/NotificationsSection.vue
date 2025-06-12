@@ -1,12 +1,8 @@
 <template>
   <div class="notifications-section">
     <div class="mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-        Notificaciones
-      </h2>
-      <p class="text-gray-600 dark:text-gray-400">
-        Gestiona tus notificaciones y preferencias
-      </p>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Notificaciones</h2>
+      <p class="text-gray-600 dark:text-gray-400">Gestiona tus notificaciones y preferencias</p>
     </div>
 
     <div v-if="loading" class="flex justify-center py-8">
@@ -18,13 +14,13 @@
         v-for="notification in notifications"
         :key="notification.id"
         class="notification-item"
-        :class="{ 'unread': !notification.read }"
+        :class="{ unread: !notification.read }"
       >
         <div class="flex items-start gap-4">
           <div class="notification-icon">
             <i :class="getNotificationIcon(notification.type)" class="text-lg"></i>
           </div>
-          
+
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-medium text-gray-900 dark:text-white">
@@ -46,11 +42,11 @@
                 />
               </div>
             </div>
-            
+
             <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
               {{ notification.message }}
             </p>
-            
+
             <Badge
               :value="getTypeLabel(notification.type)"
               :severity="getTypeSeverity(notification.type)"
@@ -64,12 +60,8 @@
 
     <div v-else-if="!loading" class="text-center py-8">
       <i class="pi pi-bell text-4xl text-gray-400 mb-4"></i>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        Sin notificaciones
-      </h3>
-      <p class="text-gray-600 dark:text-gray-400">
-        No tienes notificaciones pendientes
-      </p>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Sin notificaciones</h3>
+      <p class="text-gray-600 dark:text-gray-400">No tienes notificaciones pendientes</p>
     </div>
 
     <Message v-if="profileStore.error" severity="error" class="mt-4">
@@ -77,7 +69,9 @@
     </Message>
 
     <!-- Acciones -->
-    <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+    <div
+      class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"
+    >
       <div class="text-sm text-gray-600 dark:text-gray-400">
         {{ unreadCount }} notificaciones sin leer
       </div>
@@ -142,9 +136,9 @@ async function markAsRead(notificationId: number) {
 async function markAllAsRead() {
   try {
     const promises = notifications.value
-      .filter(n => !n.read)
-      .map(n => profileStore.markNotificationAsRead(n.id))
-    
+      .filter((n) => !n.read)
+      .map((n) => profileStore.markNotificationAsRead(n.id))
+
     await Promise.all(promises)
   } catch (error) {
     console.error('Error marking all notifications as read:', error)
@@ -153,34 +147,34 @@ async function markAllAsRead() {
 
 function getNotificationIcon(type: string): string {
   const iconMap: Record<string, string> = {
-    'info': 'pi pi-info-circle text-blue-600',
-    'warning': 'pi pi-exclamation-triangle text-yellow-600',
-    'success': 'pi pi-check-circle text-green-600',
-    'error': 'pi pi-times-circle text-red-600'
+    info: 'pi pi-info-circle text-blue-600',
+    warning: 'pi pi-exclamation-triangle text-yellow-600',
+    success: 'pi pi-check-circle text-green-600',
+    error: 'pi pi-times-circle text-red-600',
   }
-  
+
   return iconMap[type] || 'pi pi-bell text-gray-600'
 }
 
 function getTypeLabel(type: string): string {
   const labelMap: Record<string, string> = {
-    'info': 'Información',
-    'warning': 'Advertencia',
-    'success': 'Éxito',
-    'error': 'Error'
+    info: 'Información',
+    warning: 'Advertencia',
+    success: 'Éxito',
+    error: 'Error',
   }
-  
+
   return labelMap[type] || type
 }
 
 function getTypeSeverity(type: string): 'success' | 'info' | 'warning' | 'danger' {
   const severityMap: Record<string, 'success' | 'info' | 'warning' | 'danger'> = {
-    'info': 'info',
-    'warning': 'warning',
-    'success': 'success',
-    'error': 'danger'
+    info: 'info',
+    warning: 'warning',
+    success: 'success',
+    error: 'danger',
   }
-  
+
   return severityMap[type] || 'info'
 }
 
@@ -188,7 +182,7 @@ function formatDateTime(timestamp: string): string {
   const date = new Date(timestamp)
   const now = new Date()
   const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-  
+
   if (diffInHours < 1) {
     const diffInMinutes = Math.floor(diffInHours * 60)
     return `Hace ${diffInMinutes} min`
@@ -198,7 +192,7 @@ function formatDateTime(timestamp: string): string {
     return date.toLocaleDateString('es-CO', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     })
   }
 }

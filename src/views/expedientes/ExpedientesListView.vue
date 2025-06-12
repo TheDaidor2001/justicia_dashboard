@@ -92,20 +92,16 @@ const needsMyAction = (expediente: Expediente) => {
   return canApprove(expediente) || canReject(expediente)
 }
 
-// Paginación local para expedientes filtrados
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
-
-const paginatedExpedientes = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredExpedientes.value.slice(start, end)
-})
-
-const totalPages = computed(() => Math.ceil(filteredExpedientes.value.length / itemsPerPage.value))
-
+// Usar paginación del servidor
 const onPageChange = (event: any) => {
-  currentPage.value = event.page + 1
+  console.log('=== DEBUG onPageChange ===')
+  console.log('Evento de página:', event)
+  console.log('Página actual del store:', pagination.value.page)
+  console.log('Total records:', pagination.value.total)
+  console.log('Limit:', pagination.value.limit)
+  const newPage = event.page + 1
+  console.log('Nueva página calculada:', newPage)
+  setPage(newPage)
 }
 </script>
 
@@ -217,12 +213,13 @@ const onPageChange = (event: any) => {
     <Card>
       <template #content>
         <DataTable
-          :value="paginatedExpedientes"
+          :value="filteredExpedientes"
           :loading="loading"
           :paginator="true"
-          :rows="itemsPerPage"
-          :totalRecords="filteredExpedientes.length"
-          :first="(currentPage - 1) * itemsPerPage"
+          :lazy="true"
+          :rows="pagination.limit"
+          :totalRecords="pagination.total"
+          :first="(pagination.page - 1) * pagination.limit"
           @page="onPageChange($event)"
           stripedRows
           showGridlines
